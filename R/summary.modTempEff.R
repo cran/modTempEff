@@ -27,13 +27,13 @@ function(object, spar=TRUE, digits = max(3, getOption("digits") - 3), ...){
       xx<-matrix(,2,6)
       rownames(xx)<-c("Cold","Heat")
       colnames(xx)<-c("Est","SE.freq","SE.bayes","rank","edf","L")
-      xx["Cold",1:2]<-object$ToTfreddo[1:2]; xx["Cold",3]<-object$ToTfreddo.bayes[2]
-      xx["Heat",1:2]<-object$ToTcaldo[1:2]; xx["Heat",3]<-object$ToTcaldo.bayes[2]
+      xx["Cold",1:2]<-object$ToTcold[1:2]; xx["Cold",3]<-object$ToTcold.bayes[2]
+      xx["Heat",1:2]<-object$ToTheat[1:2]; xx["Heat",3]<-object$ToTheat.bayes[2]
       xx["Cold","rank"]<-object$rank.cold
       xx["Heat","rank"]<-object$rank.heat
       xx["Cold","edf"]<-edf.cold.tot; xx["Heat","edf"]<-edf.heat.tot
-      xx["Cold","L"]<-length(object$betaFreddo)-1
-      xx["Heat","L"]<-length(object$betaCaldo)-1
+      xx["Cold","L"]<-length(object$betaCold)-1
+      xx["Heat","L"]<-length(object$betaHeat)-1
       cat("Net effects of temperature: \n")
       print(xx,digits=digits)
       cat("Threshold: \n")

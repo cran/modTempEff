@@ -6,14 +6,14 @@ function(x, which=c("cold","heat"), new=TRUE, var.bayes=FALSE, add=FALSE, delta.
     if(add) new<-FALSE
     if(new) {x11();par(mfrow=c(1,cold+heat))}
     z<-qnorm((1+level)/2)
-    xf<- -x$betaFreddo
-    xc<-x$betaCaldo
+    xf<- -x$betaCold
+    xc<-x$betaHeat
     if(var.bayes) {
-        SE.f<-x$SE.f.bayes
-        SE.c<-x$SE.c.bayes
+        SE.f<-x$SE.c.bayes
+        SE.c<-x$SE.h.bayes
         } else {
-          SE.f<-x$SE.f
-          SE.c<-x$SE.c
+          SE.f<-x$SE.c
+          SE.c<-x$SE.h
                }
     if(cold){
       etich<-"logRR for Cold"

@@ -7,12 +7,12 @@
      only used when calling 'tempeff' or 'tempeff.fit'.
 }
 \usage{
-fit.control(toll = 1e-04, display = FALSE, it.max = 20, 
+fit.control(tol = 1e-06, display = FALSE, it.max = 20, 
   GLM = FALSE, maxit.inner = 3)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{toll}{ positive convergence tolerance. }
+  \item{tol}{ positive convergence tolerance. }
   \item{display}{ logical indicating if deviance should be printed for each iteration. }
   \item{it.max}{ integer giving the maximal number of iterations. }
   \item{GLM}{ logical indicating if at each iteration a GLM (rather than a GAM) has to be fitted. }
@@ -21,7 +21,7 @@ fit.control(toll = 1e-04, display = FALSE, it.max = 20,
 \details{
   Fitting of Constrained Distributed Lag Model is performed via iterative estimate of proper
   Generalized Additive (or Linear when \code{GLM=TRUE}) models. The algorithm stops when 
-  the relative increase in deviance is smaller than \code{toll} or when the maximum number of 
+  the relative increase in deviance is smaller than \code{tol} or when the maximum number of 
   iterations \code{it.max} is attained. The maximum number of (inner) iterations to estimate the working 
   GLM at each (outer) iteration is controlled by \code{maxit.inner}. 
 }

@@ -27,7 +27,7 @@ bspline<-function(x, ndx, xlr=NULL, deg=3, deriv=0){
 #ndx: n.intervalli in cui dividere il range
 #deg: il grado della spline
 #Restituisce ndx+deg basis functions per ndx-1 inner nodi
-require(splines)
+#require(splines)
     if(is.null(xlr)){
     xl<-min(x)-.01*diff(range(x))
     xr<-max(x)+.01*diff(range(x))
@@ -43,7 +43,7 @@ require(splines)
     B #the B-spline base matrix
 }#end_fn
 
-    require(mgcv)
+#    require(mgcv)
     if(!is.matrix(X)) stop("X has to be a matrix")
     if(only.seas && ndx.seas==0) stop("if only.seas is TRUE it should be 'ndx.seas>0' ")
     n<-length(y)
@@ -170,24 +170,24 @@ require(splines)
         o$delta<-o$coefficients[id.d]
         o$Tdelta<-c(coef=o$delta,tvalue=o$delta/sqrt(diag(as.matrix(o$Ve[id.d,id.d]))))
         }
-    o$betaFreddo<-Af%*%o$coef[id.f]
-    o$betaCaldo<-Ac%*%o$coef[id.c]
+    o$betaCold<-Af%*%o$coef[id.f]
+    o$betaHeat<-Ac%*%o$coef[id.c]
     #o$Af<-Af
     #o$Ac<-Ac
     Var<- o$Ve #o Vp is bayesian (larger)
-    o$SE.f<-sqrt(diag(Af%*%Var[id.f,id.f]%*%t(Af)))
-    o$SE.c<-sqrt(diag(Ac%*%Var[id.c,id.c]%*%t(Ac)))
-    o$ToTfreddo<-c(-sum(o$betaFreddo),
+    o$SE.c<-sqrt(diag(Af%*%Var[id.f,id.f]%*%t(Af)))
+    o$SE.h<-sqrt(diag(Ac%*%Var[id.c,id.c]%*%t(Ac)))
+    o$ToTcold<-c(-sum(o$betaCold),
       sqrt(drop(rep(1,nrow(Af))%*%Af%*%Var[id.f,id.f]%*%t(Af)%*%rep(1,nrow(Af)))))
-    o$ToTcaldo<-c(sum(o$betaCaldo),
+    o$ToTheat<-c(sum(o$betaHeat),
       sqrt(drop(rep(1,nrow(Ac))%*%Ac%*%Var[id.c,id.c]%*%t(Ac)%*%rep(1,nrow(Ac)))))
     #calcolo var bayesiana
     Var<- o$Vp
-    o$SE.f.bayes<-sqrt(diag(Af%*%Var[id.f,id.f]%*%t(Af)))
-    o$SE.c.bayes<-sqrt(diag(Ac%*%Var[id.c,id.c]%*%t(Ac)))
-    o$ToTfreddo.bayes<-c(-sum(o$betaFreddo),
+    o$SE.c.bayes<-sqrt(diag(Af%*%Var[id.f,id.f]%*%t(Af)))
+    o$SE.h.bayes<-sqrt(diag(Ac%*%Var[id.c,id.c]%*%t(Ac)))
+    o$ToTcold.bayes<-c(-sum(o$betaCold),
       sqrt(drop(rep(1,nrow(Af))%*%Af%*%Var[id.f,id.f]%*%t(Af)%*%rep(1,nrow(Af)))))
-    o$ToTcaldo.bayes<-c(sum(o$betaCaldo),
+    o$ToTheat.bayes<-c(sum(o$betaHeat),
       sqrt(drop(rep(1,nrow(Ac))%*%Ac%*%Var[id.c,id.c]%*%t(Ac)%*%rep(1,nrow(Ac)))))
     o$edf.cold<-o$edf[id.f]; o$rank.cold<-ncol(Af)
     o$edf.heat<-o$edf[id.c]; o$rank.heat<-ncol(Ac)

@@ -3,7 +3,7 @@
 \alias{modTempEff}
 \docType{package}
 \title{
-  Modelling temperature effects on mortality via constrained segmented 
+  Modelling temperature effects on mortality via the constrained segmented 
   distributed lag parameterization}
 \description{
   Estimation of a Poisson log linear regression to model the temperature effect on health 
@@ -14,8 +14,8 @@
 \tabular{ll}{
 Package: \tab modTempEff\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2009-07-08\cr
+Version: \tab 1.1\cr
+Date: \tab 2009-09-14\cr
 License: \tab GPL\cr
 }
 Package \code{modTempEff} fits a Poisson log linear regression to model the temperature effect on health 
@@ -35,8 +35,8 @@ Muggeo, V.M.R. (2008) Modeling temperature effects on mortality: multiple
 
 Muggeo, V.M.R., Hajat, S. (2009) Modelling the nonlinear multiple-lag effects of 
   ambient temperature on mortality in Santiago and Palermo : a constrained 
-  segmented distributed lag approach  \emph{Occupational Environmental Medicine} 
-  to appear.
+  segmented distributed lag approach. \emph{Occupational Environmental Medicine} 
+  \bold{66}, 584--591. 
 
 Muggeo, V.M.R. (2003) Estimating regression models with unknown break-points.
     \emph{Statistics in Medicine} \bold{22}, 3055--3071.
@@ -54,7 +54,7 @@ review of the epidemiologic evidence  \emph{Epidemiological Reviews} \bold{24}, 
 \keyword{ package }
 \keyword{ models }
 \seealso{
-\code{\link[<mgcv>:<mgcv>-package]{mgcv}}
+\code{\link[mgcv]{mgcv}}
 }
 \examples{
 \dontrun{

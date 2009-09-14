@@ -32,7 +32,7 @@ bspline<-function(x, ndx, xlr=NULL, deg=3, deriv=0){
 #ndx: n.intervalli in cui dividere il range
 #deg: il grado della spline
 #Restituisce ndx+deg basis functions per ndx-1 inner nodi
-require(splines)
+#require(splines)
     if(is.null(xlr)){
     xl<-min(x)-.01*diff(range(x))
     xr<-max(x)+.01*diff(range(x))
