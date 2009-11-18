@@ -1,30 +1,6 @@
 `tempeff` <-
-function(formula, z, data, tcontrol=temp.control(), pcontrol=p.control(),
-    fcontrol=fit.control(), etastart=NULL, ndx.seas=0, ...){
-#usa tcontrol=NULL per non stimare la temp (comunque mi sa che z deve essere fornita)
-#
-#utilizza te1() +pen.opt()+bspline()
-#modifica 14/11/05 per f; modifica 01/05/07; 17/05/07
-#News: eliminata l'opzione f per sciegliere la base (adesso una vere bspline())
-#------------------
-#y: la risposta
-#X: la matrice delle esplicative standard (escluso la temp)
-#z: la temp
-#psi: starting value. Se length(psi)=2 viene stimato un modello "\_/"
-#L: un vettore che definisce i lag per il freddo e il caldo rispettivamente
-#heat.power: esponente del caldo
-#ndx: un vettore per passare argomenti a bspline() per la costruzione delle basi del freddo e del caldo.
-#   considera che ndx è il n.intervalli, quindi ndx-1 sono i nodi interni e ndx+deg è il rango della base
-#etastart=un vettore da passare a te1() come valori iniziali (attenzione alla lunghezza..)
-#control: una lista con opzioni per la stima..(vedi fit.control()
-#...: argomenti da passare a te1(), quali penalty, ridge.formulas, seasonP . Ad esempio:
-#       penalty: list(DL=TRUE,diff.varying="no",ridge=TRUE)
-#       ridge.formulas=list(cold="xlag^2",heat="xlag^2")
-#
-#NB: i primi max(L) osservazioni vengono scartate (of course). Quindi la dev che viene stampata se visual=T
-#   è diversa da quella del modello originale in quanto mancano le prime max(L) osservazioni.
-#si dovrebbe aggiungere l'argomento middle.null che se FALSE stima two-breakpoints model without constraints on the slopes
-
+function(formula, data, fcontrol=fit.control(), etastart=NULL, drop.L, ...){
+# source("d:/lavori/jss/modtempeff/r/tempeff.r")
 #--required functions: bspline() lagged()
 bspline<-function(x, ndx, xlr=NULL, deg=3, deriv=0){
 #x: vettore di dati
@@ -54,42 +30,103 @@ lagged<-function(x,lag=1){#by T.Lumley
             c(rep(NA,lag),x[-( (n-lag+1):n)])
       }
 #-----------------------------------
-
-    etic=deparse(substitute(z))
     if (missing(data)) data <- environment(formula)
     mf <- match.call(expand.dots = FALSE)
-    m<-match(c("formula", "data", "z"), names(mf), 0)
+    m<-match(c("formula", "data"), names(mf), 0)
     mf <- mf[c(1, m)]
-    #get_all_vars(y~x+temp(z),data=d) potrebbe essere anche utile.
-#    m <- match(c("formula", "data", "subset", "weights", "na.action",
-#        "etastart", "mustart", "offset"), names(mf), 0)
-#    mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame") #restituisce model.frame(formula = y ~ x, data = d, drop.unused.levels = TRUE)
     mf <- eval(mf, parent.frame()) #restituisce una dataframe
     y <- model.response(mf, "any")
     mt <- attr(mf, "terms")
-    X<-model.matrix(mt, mf, contrasts)
-    #id.temp<-which(is.na(match(names(mf),c(names(mf)[1],colnames(X)))))
-    #z<-mf[,id.temp]
-    z<-mf[,length(all.vars(formula))+1]
+    X<-model.matrix(mt, mf, contrasts) 
+#    if(!"(Intercept)"%in%colnames(X)) stop("The model intercept is required")
+    tf <- terms(formula, specials = c("csdl","seas","dl"))
+    id.csdl<-attr(tf,"specials")$csdl #non dipende se c'è intercetta o meno..
+    if(length(id.csdl)>1) stop("Only one csdl() term is allowed!")
+    id.seas<-attr(tf,"specials")$seas
+    id.dl<-attr(tf,"specials")$dl
     
+    #NB: (id.csdl) è la posizione della variabile csdl(x) nel model frame (include y ma non dipende da l'intercetta)
     toll<-fcontrol$toll
     visual<-fcontrol$visual
     it.max<-fcontrol$it.max
     GLM<-fcontrol$GLM
     maxit.glm<-fcontrol$maxit.inner
-
-    if(!is.na(tcontrol[1])){
+    #    
+    ndx.seas<-0
+    if(!is.null(id.csdl)){ #se c'è csdl() nella formula..
+        if("z"%in%names(match.call(expand.dots = FALSE)$...)){
+            new.mf <- match.call(expand.dots = TRUE)
+            new.m<-match(c("formula", "data","z"), names(new.mf), 0)
+            etic<-nomeTemp<-as.character(new.mf[["z"]])
+                } else {
+            etic<-nomeTemp<-all.vars(formula)[id.csdl]
+            }
         only.seas<-FALSE
-        psi<- tcontrol$psi
-        heat.power<-tcontrol$heat.power
-        L <-tcontrol$L
-        ndx <- tcontrol$ndx
-
+        testo.csdl<-names(mf)[id.csdl] #colnames(X)[id.csdl] #questa è la stringa del tipo csda(..)
+        #testo.csdl<-grep("^csdl\\(",colnames(X),value=TRUE)
+        nomiOrig.mf<-names(mf)
+        names(mf)<-all.vars(formula)        
+        z<-with(mf,eval(parse(text=testo.csdl)))
+        names(mf)<-nomiOrig.mf #ripristina i nomi..
+#        #estrai tutti gli argomenti per la modellazione della temp.
+#        psi<-attr(z,"psi"); L<-attr(z,"L") ecc..
+        #
+        # se gli argomenti di csdl(), i.e. psi,L,ndx,ridge,DL, diff.varying sono messi come 
+        #argomenti di tempeff(), questi sovrascrivono i corrispondenti di csdl(). (utile per update)
+        new.mf <- match.call(expand.dots = FALSE)
+        new.args<-new.mf$...
+        psi<-L<-ndx<-DL<-ridge<-diff.varying<-heat.power<-NULL
+        for(j in c("psi","L","ndx","DL","ridge","diff.varying","heat.power")){
+          if(j %in% names(new.args)) assign(j,new.args[[j]]) else assign(j,attr(z,j))
+        }
+        #
+        pcontrol<-list(DL=DL,diff.varying=diff.varying, ridge.formulas=ridge)
+        #
+        add.args.temp<-any(c("psi","L","ridge","ndx","DL","diff.varying","heat.power")%in%names(new.args))
+        if(add.args.temp){
+          fo.no.csdl<-update.formula(formula,as.formula(paste(".~.-",testo.csdl)))
+          agg.testo<-paste("csdl(",nomeTemp,",psi=",psi,paste(",L=c(",L[1],",",L[2],")",sep=""),sep="")
+          if(length(grep("ridge",testo.csdl))>0 || "ridge"%in%names(new.args)){
+            testo.ridge<-if(is.null(ridge)) "NULL" else
+               paste("list(cold='", ridge[["cold"]],"'," ,"heat='",ridge[["heat"]] ,"')",sep="")
+                agg.testo<-paste(agg.testo,",ridge=",testo.ridge,sep="")
+            }
+          if(length(grep("ndx",testo.csdl))>0 || "ndx"%in%names(new.args)){
+            agg.testo<-paste(agg.testo,",ndx=c(",ndx[1],",",ndx[2],")",sep="")
+            }
+          if(length(grep("DL",testo.csdl))>0 || "DL"%in%names(new.args)){
+            agg.testo<-paste(agg.testo,",DL=",DL,sep="")
+            }
+          if(length(grep("diff.varying",testo.csdl))>0 || "diff.varying"%in%names(new.args)){
+            agg.testo<-paste(agg.testo,",diff.varying=",diff.varying,sep="")
+            }
+        nuovo.testo.csdl<-paste(agg.testo,")",sep="")
+        new.formula<-update.formula(fo.no.csdl, as.formula(paste(".~.+",nuovo.testo.csdl)))
+          }
+        #
+        if("z"%in%names(match.call(expand.dots = FALSE)$...)){
+            new.mf <- match.call(expand.dots = TRUE)
+            new.m<-match(c("formula", "data","z"), names(new.mf), 0)
+            new.mf<-new.mf[c(1,new.m)]
+            new.mf[[1]]<-as.name("model.frame")
+            new.mf <- eval(new.mf, parent.frame())
+            z<-new.mf[,length(all.vars(formula))+1]
+            #new.mf<-paste("model.frame(~1,", "data=", mf[c(m[2])],",z=",match.call(expand.dots = FALSE)$...[["z"]],")")
+            #new.mf <- eval(parse(text=new.mf), parent.frame())
+            } else {
+        z<-X[,testo.csdl]
+        #oppure z<-X[,id.csdl]; oppure: z<-as.numeric(z) #(è la temperatura)
+        #oppure: assign(nomeTemp, X[,id.csdl]);z<-eval(parse(text=nomeTemp))
+        #
+        }
+        X<-X[,-match(testo.csdl,colnames(X))] #matrice del modello senza temp
+        #
         yy<-y[-(1:max(L))]
         XX<-X[-(1:max(L)),]
-
+        #
+        psi<-eval(psi)
         k<-length(psi)
         if(any(psi<=min(z)) || any(psi>=max(z))) stop("Invalid starting values for psi")
         if(length(psi)>2) stop("One or two breakpoints allowed")
@@ -101,7 +138,7 @@ lagged<-function(x,lag=1){#by T.Lumley
         Xlag<-as.matrix(sapply(0:max(L),function(i) lagged(z,i)))[-(1:max(L)),]
         U1<-pmin(Xlag[,1:(L[1]+1)]-PSI1,0)
         U2<-pmax(Xlag[,1:(L[2]+1)]-PSI2,0)^heat.power
-
+        #
         A1<-bspline(0:L[1],ndx=ndx[1]) #B-spline basis for cold
         A2<-bspline(0:L[2],ndx=ndx[2]) #B-spline basis for heat
         colnames(A1)<-colnames(A2)<-NULL
@@ -109,65 +146,56 @@ lagged<-function(x,lag=1){#by T.Lumley
         Xc<-U2%*%A2
         colnames(Xf)<-paste("Xf",1:ncol(Xf),sep="")
         colnames(Xc)<-paste("Xc",1:ncol(Xc),sep="")
-    #if(!middle.null){
-        #Umezzo<-pmax(Xlag[,1:(L[2]+1)]-PSI1,0)
-        #Xmezzo<-Umezzo%*%A2
-        #colnames(Xmezzo)<-paste("Xmm",1:ncol(Xmezzo),sep="")
-        #XREG<-cbind(XREG,Xmezzo)
-        #}
-        } else {
+    } else { #se *non* c'è csdl()
         only.seas<-TRUE
-        if(ndx.seas==0) stop("tcontrol=NULL, please provide 'ndx.seas>0'")
-        o<-tempeff.fit(y,X,etastart=etastart,only.seas=only.seas,ndx.seas=ndx.seas,...)
+#        if(is.null(id.seas)) stop("without csdl(), at least provide seas()!")
+        if(is.null(id.seas)) {#se non c'è smoothing..
+        warning("Using glm.fit() for simple Poisson GLM fitting",call.=FALSE)
+#        if(!missing(drop.L)) data<- data[-(1:drop.L),]
+#        o<-glm(formula,data=data,family=poisson)
+        #oppure
+        if(!missing(drop.L)) {
+            X<-as.matrix(X[-(1:drop.L),])
+            y<-y[-(1:drop.L)]
+            }
+        o<-glm.fit(x=X, y=y, family=poisson())
         o$call<-match.call()
-        return(o)
+        o$formula<-o$call$formula
+        o$df.residual<-length(o$residuals)-length(o$coefficients)
+        class(o)<-"modTempEff"
+        return(o)        
+        }
+    testo.seas<-names(mf)[id.seas] #colnames(X)[id.seas] #questa è la stringa del tipo "seas(..)"
+    #Non serve valutare `seas()' come csdl(), mi interessa solo ndx.seas
+    ndx.seas<-as.numeric(unlist(strsplit(unlist(strsplit(testo.seas,","))[2],"\\)")))
+    X<-as.matrix(X[,-match(testo.seas,colnames(X))])
+    if(!missing(drop.L)) {
+            X<-as.matrix(X[-(1:drop.L),])
+            y<-y[-(1:drop.L)]
+            }
+    o<-tempeff.fit(y,X,etastart=etastart,only.seas=only.seas,ndx.seas=ndx.seas) #tolto ...
+    o$call<-match.call()
+    o$formula<-o$call$formula
+    o$df.residual<-length(o$residuals)-sum(o$edf)
+    class(o)<-"modTempEff"
+    return(o)
+    } #end se *non* c'è csdl()
+    if(!is.null(id.seas)){ #se c'è la seas
+        names(mf)<-nomiOrig.mf #ripristina i nomi..
+        testo.seas<-names(mf)[id.seas]#questa è la stringa del tipo "seas(..)"
+        ndx.seas<-as.numeric(unlist(strsplit(unlist(strsplit(testo.seas,","))[2],"\\)")))        
+        XX<-as.matrix(XX[,-match(testo.seas,colnames(XX))])
         }
     if(it.max==0){
-    #se it.max=0 restituisce un modello con assegnati breakpoints==psi
-        o<-tempeff.fit(yy,XX,Af=A1,Ac=A2,Xf,Xc,V=NULL,etastart=etastart,only.seas=only.seas,...)
+        #se it.max=0 restituisce un modello con assegnati breakpoints==psi
+        o<-tempeff.fit(yy,XX,Af=A1,Ac=A2,Xf,Xc,V=NULL,etastart=etastart,penalty=pcontrol,
+          only.seas=only.seas,ndx.seas=ndx.seas) #tolto ...
         o$call<-match.call()
+        o$formula<-if(!add.args.temp) formula else new.formula
+        o$psi<-unique(psi)
+        class(o)<-"modTempEff"
         return(o)
-#        COV<-solve(crossprod(XREG,diag(obj$weights))%*%XREG)
-#        colnames(COV)<-rownames(COV)
-#        varFr<-A1%*%COV[id1, id1]%*%t(A1)
-#        varCa<-A2%*%COV[id2, id2]%*%t(A2)
-        #if(!middle.null){
-            #varFr<-A1%*%COV[id1, id1]%*%t(A1)
-            #varM<-A2%*%COV[idm, idm]%*%t(A2)
-            #AC<-cbind(A2,A2) #questa è la matrice che serve per ottenere le slope dopo psi2 (in realtà è cbind(Am,A2))
-            #betaCa<-AC%*%c(am,a2) #queste sono le slope dopo psi2
-            #varCa<-AC%*%COV[c(idm,id2),c(idm,id2)]%*%t(AC) #questa è la var(slope dopo psi2)
-            #sumcoefFr<- crossprod(rep(1,length(beta1)),beta1)
-            #sumcoefM<- crossprod(rep(1,length(betam)),betam)
-            #sumcoefCa<- crossprod(rep(1,length(betaCa)),betaCa)
-            #VarSumcoefFr<- crossprod(rep(1,length(beta1)),varFr)%*%rep(1,length(beta1))
-            #VarSumcoefM<- crossprod(rep(1,length(betam)),varM)%*%rep(1,length(betam))
-            #VarSumcoefCa<- crossprod(rep(1,length(betaCa)),varCa)%*%rep(1,length(betaCa))
-            #Fr<-cbind(Est=c(beta1,sumcoefFr),SE=c(sqrt(diag(varFr)),sqrt(VarSumcoefFr)))
-            #Fr<-cbind(Fr,tvalue=Fr[,1]/Fr[,2])
-            #rownames(Fr)<-c(paste("lag",0:L[1],""),"sum")
-            #Me<-cbind(Est=c(betam,sumcoefM),SE=c(sqrt(diag(varM)),sqrt(VarSumcoefM)))
-            #Me<-cbind(Me,tvalue=Me[,1]/Me[,2])
-            #rownames(Me)<-c(paste("lag",0:L[2],""),"sum")
-            #Ca<-cbind(Est=c(betaCa,sumcoefCa),SE=c(sqrt(diag(varCa)),sqrt(VarSumcoefCa)))
-            #Ca<-cbind(Ca,tvalue=Ca[,1]/Ca[,2])
-            #rownames(Ca)<-c(paste("lag",0:L[2],""),"sum")
-            #out<-list(modello=obj,cold=Fr,middle=Me,heat=Ca)
-            #return(out)
-            #}
-#        sumcoefFr<- crossprod(rep(1,length(beta1)),beta1)
-#        sumcoefCa<- crossprod(rep(1,length(beta2)),beta2)
-#        VarSumcoefFr<- crossprod(rep(1,length(beta1)),varFr)%*%rep(1,length(beta1))
-#        VarSumcoefCa<- crossprod(rep(1,length(beta2)),varCa)%*%rep(1,length(beta2))
-#        Fr<-cbind(Est=c(beta1,sumcoefFr),SE=c(sqrt(diag(varFr)),sqrt(VarSumcoefFr)))
-#        Fr<-cbind(Fr,tvalue=Fr[,1]/Fr[,2])
-#        rownames(Fr)<-c(paste("lag",0:L[1],""),"sum")
-#        Ca<-cbind(Est=c(beta2,sumcoefCa),SE=c(sqrt(diag(varCa)),sqrt(VarSumcoefCa)))
-#        Ca<-cbind(Ca,tvalue=Ca[,1]/Ca[,2])
-#        rownames(Ca)<-c(paste("lag",0:L[2],""),"sum")
-#        out<-list(modello=obj,cold=Fr,heat=Ca)
-#        return(out)
-        } #end_ if(itmax=0)
+        }
     dev00<-glm.fit(x=XX, y=yy, family=poisson())$dev
     XREG<-cbind(XX,Xf,Xc)
     obj<-glm.fit(XREG, yy, family=poisson())
@@ -177,16 +205,10 @@ lagged<-function(x,lag=1){#by T.Lumley
     a2<-coef(obj)[id2]
     beta1<- A1%*%a1
     beta2<- A2%*%a2
-    #if(!middle.null){
-        #idm<-grep("Xmm",names(coef(obj)))
-        #am<-coef(obj)[idm]
-        #betam<- A2%*%am
-        #}
     initial <- psi
     it <- 1
     epsilon <- 10
-    #X<-X[-(1:max(L)),]
-        while(abs(epsilon)>toll) { #start_while
+    while(abs(epsilon)>toll) { #start_while
             eta0<-obj$linear.predictors
             U1<-pmin(Xlag[,1:(L[1]+1)]-PSI1,0)
             U2<-pmax(Xlag[,1:(L[2]+1)]-PSI2,0)^heat.power
@@ -215,9 +237,9 @@ lagged<-function(x,lag=1){#by T.Lumley
               d<-obj$coef[grep("V",names(obj$coef))]
               } else {
                 obj<-tempeff.fit(yy,XX,Af=A1,Ac=A2,Xf,Xc,V=V,gam.fit.it=maxit.glm,etastart=eta0,ndx.seas=ndx.seas,
-                  penalty=pcontrol, ...)
-                beta1<-obj$betaFreddo
-                beta2<-obj$betaCaldo
+                  penalty=pcontrol) #tolto ...
+                beta1<-obj$betaCold
+                beta2<-obj$betaHeat
                 d<- obj$delta
                 }
             #----
@@ -233,7 +255,7 @@ lagged<-function(x,lag=1){#by T.Lumley
             flush.console()
             if (it == 1)
                 cat(0, " ", formatC(dev00, 3, format = "f"),
-                  "", "-----without variable", "\n")
+                  "", "---- without 'csdl' variable", "\n")
             spp <- if (it < 10) "" else NULL
             cat(it, spp, "", formatC(c(dev.new,unique(psi)), 3, format = "f"), "\n")
             }
@@ -244,7 +266,7 @@ lagged<-function(x,lag=1){#by T.Lumley
             break
         } #end_while
     if (it > it.max) warning("max number of iterations attained", call. = FALSE)
-    obj<-tempeff.fit(yy,XX,Af=A1,Ac=A2,Xf,Xc,V=V,etastart=eta0,ndx.seas=ndx.seas,penalty=pcontrol,...)
+    obj<-tempeff.fit(yy,XX,Af=A1,Ac=A2,Xf,Xc,V=V,etastart=eta0,ndx.seas=ndx.seas,penalty=pcontrol) #tolto ...
     var.psi<- obj$Ve[obj$id.d,obj$id.d]
     var.psi.bayes<-  obj$Vp[obj$id.d,obj$id.d]
     if(k==2) {
@@ -254,8 +276,11 @@ lagged<-function(x,lag=1){#by T.Lumley
     psi<-cbind(unique(psi),sqrt(var.psi),sqrt(var.psi.bayes))
     colnames(psi)<-c("Est","SE.freq","SE.bayes")
     obj$psi<-psi
+    obj$formula<-formula
+    if(add.args.temp) obj$formula<-new.formula
+    obj$df.residual<-n-sum(obj$edf)
     obj$call<-match.call()
+    #if(add.args.temp) obj$call[["formula"]]<-new.formula
     class(obj)<-"modTempEff"
     return(obj)
     } #end_function..
-

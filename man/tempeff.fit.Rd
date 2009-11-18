@@ -7,10 +7,10 @@ This is an internal function of package \code{modTempEff} and it should be not
 called by the user.
 }
 \usage{
-tempeff.fit(y, X, Af = NULL, Ac = NULL, Xf = NULL, Xc = NULL, 
-  V = NULL, ndx.seas, penalty = p.control(), only.seas = FALSE, 
-  gam.fit.it = NULL, etastart = NULL, spstart = NULL, 
-  fit.method = "magic")
+tempeff.fit(y, X, Af = NULL, Ac = NULL, Xf = NULL, Xc = NULL, V=NULL,
+  ndx.seas=0, only.seas = FALSE, penalty = list(DL=FALSE, 
+  diff.varying=FALSE,ridge.formulas=NULL), gam.fit.it = NULL, 
+  etastart = NULL, spstart = NULL, fit.method = "magic")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

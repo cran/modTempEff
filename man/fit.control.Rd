@@ -13,7 +13,9 @@ fit.control(tol = 1e-06, display = FALSE, it.max = 20,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tol}{ positive convergence tolerance. }
-  \item{display}{ logical indicating if deviance should be printed for each iteration. }
+  \item{display}{ logical indicating if deviance should be printed for each iteration. This argument is 
+    ignored (actually it is \code{FALSE}) when \code{it.max=0} or when the model is fitted without 
+    the temperature effect.}
   \item{it.max}{ integer giving the maximal number of iterations. }
   \item{GLM}{ logical indicating if at each iteration a GLM (rather than a GAM) has to be fitted. }
   \item{maxit.inner}{ integer giving the maximal number of inner iterations. }

@@ -1,9 +1,20 @@
 `plot.modTempEff` <-
-function(x, which=c("cold","heat"), new=TRUE, var.bayes=FALSE, add=FALSE, delta.rr=TRUE, level=0.95,...){
+function(x, which=c("cold","heat"), add=FALSE, new=TRUE, var.bayes=FALSE, delta.rr=TRUE, level=0.95,...){
+    if(length(x$ToTheat)<=0){
+        if(length(x$fit.seas)<=0) {stop("the model does not include csdl() or seas() terms") 
+          } else {
+          if(add) lines(exp(x$fit.seas),...) else plot(exp(x$fit.seas), 
+            xlab="Time", ylab="Fitted Values", type="l", ...)
+          return(invisible(x))
+        }
+      }
     which<-match.arg(which, several.ok = TRUE)
     cold<-match("cold",which,nomatch = 0)>0
     heat<-match("heat",which,nomatch = 0)>0
-    if(add) new<-FALSE
+    if(add) {
+      new<-FALSE
+      if((cold+heat)>=2) stop("add=TRUE works only with a *single* DL curve")
+      }
     if(new) {x11();par(mfrow=c(1,cold+heat))}
     z<-qnorm((1+level)/2)
     xf<- -x$betaCold

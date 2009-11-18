@@ -4,11 +4,14 @@ function(x, digits = max(3, getOption("digits") - 3), ...){
       dev<-x$dev
       tot.edf<-sum(x$edf)
       bic<-x$aic-2*tot.edf+log(n)*tot.edf
-      ubre<- (x$dev + 2*tot.edf -1)/n
+      ubre<- (x$dev + 2*tot.edf -n)/n
       edf.cold.tot<-sum(x$edf.cold)
       edf.heat.tot<-sum(x$edf.heat)
       cat("Model Summary:\n")
-      cat("AIC =",x$aic,"  BIC =",bic,"  ubre =",ubre,"  dev =" ,x$dev, "\n")
+      cat("AIC =",x$aic,"  BIC =",bic,"  ubre =",round(ubre,5),"  dev =" ,x$dev, "\n")
+      if(length(x$ToTheat)<=0) {
+        return(invisible(x))
+        }
       cat("Degrees of freedom:\n")
       xx<-matrix(,2,4)
       colnames(xx)<-c("Model", "Cold", "Heat", "Seasonality")

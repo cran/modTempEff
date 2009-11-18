@@ -14,21 +14,25 @@
 \tabular{ll}{
 Package: \tab modTempEff\cr
 Type: \tab Package\cr
-Version: \tab 1.1\cr
-Date: \tab 2009-09-14\cr
+Version: \tab 1.3\cr
+Date: \tab 2009-11-18\cr
 License: \tab GPL\cr
 }
 Package \code{modTempEff} fits a Poisson log linear regression to model the temperature effect on health 
   using the `constrained segmented distributed lag parameterization' which allows to account simultaneously 
   for typical features of temperature effects: nonlinear effect delayed over several days. 
-  Fitting is performed by the function \code{tempeff} and print, summary, and 
-  plot methods are included to summarize results.
+  Fitting is performed by the function \code{tempeff} and 'print', 'summary', 'plot', 'anova' 
+  and 'coef' methods are included to summarize and to display results.
 }
 \author{
 Vito M.R. Muggeo \email{vito.muggeo@unipa.it}
 %##Maintainer: Vito M.R. Muggeo <vito.muggeo@unipa.it>
 }
 \references{
+Muggeo, V.M.R. (2009) Analyzing temperature effects on mortality within the R 
+  environment: the constrained segmented distributed lag parameterization
+    \emph{Journal of Statistical Software}, submitted.
+
 Muggeo, V.M.R. (2008) Modeling temperature effects on mortality: multiple 
     segmented relationships with common break points
     \emph{Biostatistics} \bold{9}, 613--620.
@@ -59,9 +63,13 @@ review of the epidemiologic evidence  \emph{Epidemiological Reviews} \bold{24}, 
 \examples{
 \dontrun{
 data(dataset)
-o1<-tempeff(dec1~day+factor(dweek)+factor(year)+factor(month), data=dataset,
-      tcontrol = temp.control(psi=20, L=c(60,60)), z=mtemp,
-      pcontrol = p.control(ridge.formulas=list(cold="xlag^2",heat="xlag^2")),
-      fcontrol = fit.control(display=TRUE))
+o1<-tempeff(dec1~day+factor(dweek)+factor(year)+factor(month)+
+      csdl(mtemp,L=c(60,60),psi=20, ridge=list(cold="l^2",heat="l^2")),
+      data=dataset, fcontrol = fit.control(display=TRUE))
+
+o2<-tempeff(dec1~seas(day,30)+
+      csdl(mtemp,L=c(60,60),psi=20, ridge=list(cold="l^2",heat="l^2")),
+      data=dataset, fcontrol = fit.control(display=FALSE))
+
 }
 }

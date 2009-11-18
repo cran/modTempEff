@@ -1,6 +1,7 @@
 `tempeff.fit` <-
-function(y, X, Af=NULL, Ac=NULL, Xf=NULL, Xc=NULL, V=NULL, ndx.seas, penalty=p.control(), only.seas=FALSE,
-          gam.fit.it=NULL, etastart=NULL, spstart=NULL, fit.method="magic"){
+function(y, X, Af=NULL, Ac=NULL, Xf=NULL, Xc=NULL, V=NULL, ndx.seas=0, only.seas=FALSE, 
+      penalty=list(DL=FALSE,diff.varying=FALSE,ridge.formulas=NULL), 
+      gam.fit.it=NULL, etastart=NULL, spstart=NULL, fit.method="magic"){
 #--DUBBI: spstart (valori iniziali per sp) e gam.fit.it (numero max di iterazioni) pare che vengano ignorati da
 #       gam.fit..???
 #y: la risposta (vettore)
@@ -65,6 +66,10 @@ bspline<-function(x, ndx, xlr=NULL, deg=3, deriv=0){
         am=FALSE,intercept=TRUE,fit.method=fit.method,w=rep(1,n),offset=rep(0,n),
         sig2=1,conv.tol=1e-07,max.half=15)
       o<-gam.fit(M,family=poisson())
+      id.seas<-seq(off.seas,length.out=ncol(B.seas))
+      o$fit.seas<-drop(B.seas%*%o$coef[id.seas])
+      o$edf.seas<-o$edf[id.seas]
+      o$rank.seas <- ncol(B.seas)
       return(o)
         }
     if(!is.null(V)){
@@ -77,7 +82,7 @@ bspline<-function(x, ndx, xlr=NULL, deg=3, deriv=0){
     Dc<-diff(diag(ncol(Ac)), diff = 2) #difference matrix for caldo
     #nomi<-c("l0.Cold","l0.Heat")
     nomi<-c(nome.seas,"lambda.Cold","lambda.Heat")
-    if(penalty$DL==TRUE) {
+    if(penalty$DL) {
         Df<-diff(diag(nrow(Af)), diff = 2)%*%Af
         Dc<-diff(diag(nrow(Ac)), diff = 2)%*%Ac
         }
@@ -126,12 +131,12 @@ bspline<-function(x, ndx, xlr=NULL, deg=3, deriv=0){
         } #end diff-varying
     #-----FINE DIFF PENALTY VARIABILE------
 
-    if(!is.na(penalty$ridge.formulas[1])){ #if ridge varying penalty..
+    if(suppressWarnings(!is.null(penalty$ridge.formulas[1]))){ #if ridge varying penalty..
         xx.rid.f<-1:nrow(Af)
         xx.rid.c<-1:nrow(Ac)
 
-        f.freddo<-function(xlag) eval(parse(text=penalty$ridge.formulas$cold))
-        f.caldo<-function(xlag)  eval(parse(text=penalty$ridge.formulas$heat))
+        f.freddo<-function(l) eval(parse(text=penalty$ridge.formulas$cold))
+        f.caldo<-function(l)  eval(parse(text=penalty$ridge.formulas$heat))
         xx.rid.f.valori<-f.freddo(xx.rid.f)
         xx.rid.c.valori<-f.caldo(xx.rid.c)
         if(is.matrix(xx.rid.f.valori)){
