@@ -7,7 +7,7 @@ function(x, digits = max(3, getOption("digits") - 3), ...){
       ubre<- (x$dev + 2*tot.edf -n)/n
       edf.cold.tot<-sum(x$edf.cold)
       edf.heat.tot<-sum(x$edf.heat)
-      cat("Model Summary:\n")
+      cat("Model Summary", paste("(n = ", n,"):",sep=""), "\n")
       cat("AIC =",x$aic,"  BIC =",bic,"  ubre =",round(ubre,5),"  dev =" ,x$dev, "\n")
       if(length(x$ToTheat)<=0) {
         return(invisible(x))

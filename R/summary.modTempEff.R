@@ -27,7 +27,7 @@ function(object, spar=TRUE, digits = max(3, getOption("digits") - 3), ...){
 #      cat("ridge penalty: ", "cold=", ridgeC, "heat=", ridgeH,"\n")
 #          }
       cat("\nSeasonality (smooth): ", seasP,"\n")
-      cat("\nFit summary", paste("(model edf = ",round(sum(object$edf),2),"):",sep=""),"\n")
+      cat("\nFit summary", paste("(model edf = ",round(sum(object$edf),2), "; n = ",n,"):",sep=""),"\n")
       cat("AIC =",object$aic," BIC =",bic," ubre =",round(ubre,5)," dev =" ,object$dev, "\n")
       xx<-matrix(,2,6)
       rownames(xx)<-c("Cold","Heat")

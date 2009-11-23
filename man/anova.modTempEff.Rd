@@ -11,13 +11,15 @@ Comparing \code{"modTempEff"} objects returned by \code{tempeff()} using an anal
   \item{object,...}{ fitted model objects of class \code{"modTempEff"} returned by \code{tempeff()}.}
   \item{dispersion}{ currently ignored. }
   \item{test}{ what sort of likelihood based criterion has to be used for model comparisons. One of
-          \code{"Chisq"}, \code{"F"} or \code{"Cp"}.}
+          \code{"Chisq"}, \code{"F"}, \code{"Cp"} or \code{"BIC"}.}
 %  \item{\dots}{ additional arguments.. }
 }
 \details{\code{anova.modTempEff} performs model comparisons in terms of likelihood-based criteria 
-depending on its argument \code{test}. When \code{test="Chisq"}, likelihood ratio tests are carried out; 
-however note that the p-values for smooth terms (included via \code{seas()} or \code{csdl()}) are approximate only.
-The function does \emph{not} work for a single \code{"modTempEff"} fit.
+depending on its argument \code{test}. In \code{anova.modTempEff}, \code{test="BIC"} is also allowed.
+The BIC appears to be the best choice to select the number of breakpoints. When \code{test="Chisq"}, 
+likelihood ratio tests are carried out; however note that the p-values for smooth terms (included via 
+\code{seas()} or \code{csdl()}) are approximate only. The function does \emph{not} work for a single 
+\code{"modTempEff"} fit.
 }
 \author{ Vito Muggeo}
 \seealso{ \code{\link{print.modTempEff}} }

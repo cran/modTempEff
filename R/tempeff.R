@@ -87,14 +87,18 @@ lagged<-function(x,lag=1){#by T.Lumley
         add.args.temp<-any(c("psi","L","ridge","ndx","DL","diff.varying","heat.power")%in%names(new.args))
         if(add.args.temp){
           fo.no.csdl<-update.formula(formula,as.formula(paste(".~.-",testo.csdl)))
-          agg.testo<-paste("csdl(",nomeTemp,",psi=",psi,paste(",L=c(",L[1],",",L[2],")",sep=""),sep="")
+          #agg.testo<-paste("csdl(",nomeTemp,",psi=",deparse(substitute(psi)), paste(",L=c(",L[1],",",L[2],")",sep=""),sep="")
+          #
+          agg.testo<-paste("csdl(",nomeTemp,",psi=",deparse(substitute(psi)), ",L=",deparse(substitute(L)),sep="")
+          #
           if(length(grep("ridge",testo.csdl))>0 || "ridge"%in%names(new.args)){
             testo.ridge<-if(is.null(ridge)) "NULL" else
                paste("list(cold='", ridge[["cold"]],"'," ,"heat='",ridge[["heat"]] ,"')",sep="")
-                agg.testo<-paste(agg.testo,",ridge=",testo.ridge,sep="")
+            agg.testo<-paste(agg.testo,",ridge=",testo.ridge,sep="")
             }
           if(length(grep("ndx",testo.csdl))>0 || "ndx"%in%names(new.args)){
-            agg.testo<-paste(agg.testo,",ndx=c(",ndx[1],",",ndx[2],")",sep="")
+            #agg.testo<-paste(agg.testo,",ndx=c(",ndx[1],",",ndx[2],")",sep="")
+            agg.testo<-paste(agg.testo,",ndx=", deparse(substitute(ndx)),sep="")
             }
           if(length(grep("DL",testo.csdl))>0 || "DL"%in%names(new.args)){
             agg.testo<-paste(agg.testo,",DL=",DL,sep="")
@@ -123,6 +127,8 @@ lagged<-function(x,lag=1){#by T.Lumley
         }
         X<-X[,-match(testo.csdl,colnames(X))] #matrice del modello senza temp
         #
+        ndx<-eval(ndx)
+        L<-eval(L)
         yy<-y[-(1:max(L))]
         XX<-X[-(1:max(L)),]
         #

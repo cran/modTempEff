@@ -1,10 +1,10 @@
 \name{dataset}
 \alias{dataset}
 \docType{data}
-\title{Simulated dataset }
+\title{Simulated dataset}
 \description{
   Simulated dataset of daily time series of mortality, temperature, pollutant, 
-  and seasonal variables
+  and seasonal variables.
 }
 \usage{data(dataset)}
 \format{
@@ -22,7 +22,9 @@
 }
 \details{
   These data represent a typical dataset employed to investigate the short term 
-  effect of temperature (and pollutant) on health via daily time series.
+  effect of temperature (and pollutant) on health via daily time series. \code{decNS} 
+  is not associated with \code{mtemp}, \code{dec1} and \code{dec2} are associated with \code{mtemp} via 
+  \emph{csdl} parameterizations with one and two breakpoints respectively.
 }
 %\source{
 %  ~~ reference to a publication or URL from which the data were obtained ~~

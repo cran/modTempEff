@@ -41,12 +41,42 @@
                   fam), domain = NA, call. = FALSE)
             else warning("using F test with a fixed dispersion is inappropriate")
         }
-        table <- stat.anova(table = table, test = test, scale = dispersion,
+        table <- stat.anova1(table = table, test = test, scale = dispersion,
             df.scale = df.dispersion, n = length(bigmodel$residuals))
     }
     structure(table, heading = c(title, topnote), class = c("anova",
         "data.frame"))
   }
+#--------------------------
+stat.anova1<-function (table, test = c("Chisq", "F", "Cp", "BIC"), scale, df.scale, n){
+    test <- match.arg(test)
+    dev.col <- match("Deviance", colnames(table))
+    if (is.na(dev.col)) 
+        dev.col <- match("Sum of Sq", colnames(table))
+    switch(test, 
+    Chisq = {
+        dfs <- table[, "Df"]
+        vals <- table[, dev.col]/scale * sign(dfs)
+        vals[dfs %in% 0] <- NA
+        vals[!is.na(vals) & vals < 0] <- NA
+        cbind(table, `P(>|Chi|)` = pchisq(vals, abs(dfs), lower.tail = FALSE))
+    }, F = {
+        dfs <- table[, "Df"]
+        Fvalue <- (table[, dev.col]/dfs)/scale
+        Fvalue[dfs %in% 0] <- NA
+        Fvalue[!is.na(Fvalue) & Fvalue < 0] <- NA
+        cbind(table, F = Fvalue, `Pr(>F)` = pf(Fvalue, abs(dfs), 
+            df.scale, lower.tail = FALSE))
+    }, Cp = {
+        cbind(table, Cp = table[, "Resid. Dev"] + 2 * scale * 
+            (n - table[, "Resid. Df"]))
+    }, BIC = {
+        cbind(table, BIC = table[, "Resid. Dev"] + log(n) * scale * 
+            (n - table[, "Resid. Df"]))
+    }
+    )
+}
+#--------------------------
 #start anova.modTempEff
     dotargs <- list(...)
     named <- if (is.null(names(dotargs)))
