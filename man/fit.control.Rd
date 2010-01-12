@@ -1,7 +1,7 @@
 \name{fit.control}
 \alias{fit.control}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ Auxiliary Function for Controlling Model Fitting }
+\title{ Auxiliary function for controlling model fitting }
 \description{
        Auxiliary function as user interface for fitting. Typically
      only used when calling 'tempeff' or 'tempeff.fit'.

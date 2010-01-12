@@ -1,0 +1,610 @@
+\documentclass[nojss]{jss}
+\usepackage{thumbpdf}
+%% need no \usepackage{Sweave}
+
+
+
+%% almost as usual
+\author{Vito~M.~R. Muggeo\\ Universit\`a di Palermo}
+\title{Analyzing Temperature Effects on Mortality within the \proglang{R} Environment:
+    the Constrained Segmented Distributed Lag Parameterization}
+
+%% for pretty printing and a nice hypersummary also set:
+\Plainauthor{Vito~M.~R. Muggeo} %% comma-separated
+\Plaintitle{Analyzing Temperature Effects on Mortality within the R Environment: the Constrained Segmented Distributed Lag Parameterization} %% without formatting
+\Shorttitle{Temperature Effects on Mortality via Constrained Segmented Distributed Lag Models} %% a short title (if necessary)
+
+
+
+%% an abstract and keywords
+\Abstract{
+This introduction to the \proglang{R} package \pkg{modTempEff} is a slightly
+modified version of \citet{Muggeo:2010} published in the
+\emph{Journal of Statistical Software}. Please cite \citet{Muggeo:2010} and \citet{muggeo:08} if you use the package.
+
+Here we present and discuss the \proglang{R} package \pkg{modTempEff} including a set of  functions
+aimed at modelling temperature effects on mortality with time series data. The functions fit a particular
+log linear model which allows to capture the two main features of mortality-temperature relationships: nonlinearity
+and distributed lag effect. Penalized splines and segmented regression constitute the core of the modelling
+framework. We briefly review the model and illustrate the functions throughout a simulated dataset.
+  }
+
+\Keywords{Temperature effects, segmented relationship, break point, P-splines, \proglang{R}}
+\Plainkeywords{temperature effects, segmented relationship, break point, P-splines, R} %% without formatting
+%% at least one keyword must be supplied
+
+%% publication information
+%% NOTE: Typically, this can be left commented and will be filled out by the technical editor
+%% \Volume{13}
+%% \Issue{9}
+%% \Month{September}
+%% \Year{2004}
+%% \Submitdate{2004-09-29}
+%% \Acceptdate{2004-09-29}
+
+%% The address of (at least) one author should be given
+%% in the following format:
+
+\Address{
+  Vito~M.~R. Muggeo\\
+  Dipartimento Scienze Statistiche e Matematiche `S. Vianelli'\\
+  Universit\`a di Palermo\\
+  90128 Palermo, Italy\\
+  E-mail: \email{vito.muggeo@unipa.it}\\
+  URL: \url{http://dssm.unipa.it/vmuggeo/}
+}
+
+%% It is also possible to add a telephone and fax number
+%% before the e-mail in the following format:
+%% Telephone: +43/1/31336-5053
+%% Fax: +43/1/31336-734
+
+%% for those who use Sweave please include the following line (with % symbols):
+%% need no \usepackage{Sweave.sty}
+
+%% end of declarations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\bb}[2]{\ensuremath{\boldsymbol{#1}_{#2}}}
+\usepackage{bm}
+\usepackage{comment}
+
+
+\begin{document}
+
+\SweaveOpts{engine=R,eps=FALSE}
+%\VignetteIndexEntry{Temperature Effects on Mortality via Constrained Segmented Distributed Lag Models}
+%\VignetteKeywords{temperature effects, segmented relationship, break point, P-splines, R}
+%\VignettePackage{modTempEff}
+
+
+%% include your article here, just as usual
+%% Note that you should use the \pkg{}, \proglang{} and \code{} commands.
+
+%\section[About Java]{About \proglang{Java}}
+%% Note: If there is markup in \(sub)section, then it has to be escape as above.
+
+<<preliminaries,echo=FALSE,results=hide>>=
+library("modTempEff")
+options(prompt = "R> ", continue = "+   ")
+@
+
+
+\section{Introduction}
+
+Health effects of air temperature are well-known. Some epidemiologic evidence may be found in \citet{braga:01}
+and \citet{basu:02} among the others. Temperature effects have been studied since a long time but in the last
+decades quantifying temperature effects has become quite important owing to greenhouse effect and consequent
+climatic changes \citep[e.g.,][]{mcgeehin:01}.
+
+The relationship between mortality and temperature is found to be V-shaped in the most of areas around the
+world: mortality reaches its minimum at some optimal value and increases as temperature gets colder or hotter.
+The temperature value where mortality reaches its minimum is sometimes referred as minimum mortality temperature
+and represents the threshold value beyond which mortality increases. Moreover it has been ascertained that the
+effect is not limited to the same day-exposure $t$, say, but it is extended to several next days $t+1, t+2,
+\ldots$ An in-depth analysis of temperature effects on mortality requires to account for the prolonged effects
+(the so-called \emph{distributed lag} effect) and for nonlinearity \citep{armstrong:06}.
+
+\citet{muggeo:08} presents a unified framework to model the temperature effects on mortality. Let
+$\E[Y_t]=\mu_t$ be the expected number of deaths for day $t=1,2,\ldots,T$, $z_t$ the temperature value, and
+$x^\top_t$ the vector of additional confounding explanatory variables, such as days of week, holidays, influenza
+epidemics, for instance. The proposed model assumes $Y_t\sim Pois(\mu_t)$ and
+\begin{equation}\label{eq:2break.mod}
+\log\mu_t=\bm{x}_t^\top\bm{\delta} +\sum_{l_1=0}^{L_1}\beta_{1l_1} (z_{t-l_1}-\psi_{1})_- +
+\sum_{l_2=0}^{L_2}\beta_{2l_2} (z_{t-l_2}-\psi_{2})_+.
+\end{equation}
+where $(z-\psi_1)_-=(z-\psi)I(z<\psi)$ and $(z-\psi_2)_+=(z-\psi_2)I(z>\psi_2)$ are two linear spline functions
+which allow to model the effects of low and high temperatures, respectively below the cold threshold $\psi_1$
+and above the heat threshold $\psi_2$;
+%more generally the thresholds constitute the breakpoints of the segmented relationship.
+$L_1$ and $L_2$ are the two maximum lag values selected to assess the delayed effects of cold and heat
+(typically $15$ to $60$); $\bm{x}_t^T\bm{\delta}$ contains typical confounders sketched above; finally
+$\beta_{1l_1}$ and $\beta_{2l_2}$ describe the effect of temperature on the response.
+
+More specifically, $\bm{\beta}_2=(\beta_{20},\beta_{21},\ldots,\beta_{2l_2},\ldots,\beta_{2L_2})^\top$ expresses
+the lag-specific log-relative risks for unit increase in temperature greater than the heat threshold $\psi_2$,
+namely the risk coming from $0,1,\ldots,l_2,\ldots,L_2$ days before. Similarly
+$\bm{\beta}_1=(\beta_{10},\beta_{11},\ldots,\beta_{1l_1},\ldots,\beta_{1L_1})^\top$ reflects the lag specific risks
+of cold understood as temperature below the relevant threshold $\psi_1$. In short, $\bm{\beta}_1$ and
+$\bm{\beta}_2$ represent the distributed lag (DL) curve of cold and heat. Model (\ref{eq:2break.mod}) may be
+simplified by assuming a common threshold for cold and heat, $\psi_1=\psi_2$, i.e.,
+\begin{equation}\label{eq:1break.mod}
+\log\mu_t=x_t^\top\delta +\sum_{l_1=0}^{L_1}\beta_{1l_1} (z_{t-l_1}-\psi)_- + \sum_{l_2=0}^{L_2}\beta_{2l_2}
+(z_{t-l_2}-\psi)_+.
+\end{equation}
+Regardless the number of thresholds notice that lag-varying risks are allowed, while the breakpoints of the
+segmented relationship, i.e., the thresholds, are constrained to be the same across the lags; for this reason, we
+call the parameterization in models (\ref{eq:2break.mod}) and (\ref{eq:1break.mod}) the \emph{constrained
+segmented distributed lag parameterization}, hereafter CSDL.
+
+To obtain plausible and reasonable findings, the model also assumes that the DL curves are smooth functions. At
+this aim, the beta parameters are expressed by means of linear combinations of B-spline bases,
+\begin{equation}\label{eq:beta2b}
+\bm{\beta}_1=\bm{Cb}_1 \qquad\qquad \bm{\beta}_2=\bm{H b}_2
+\end{equation}
+where $\bb{C}{}=[C_1,\ldots,C_{P_1}]\;\mbox{ and }\;\bb{H}{}=[H_1,\ldots,H_{P_2}]$ are the two B-spline bases
+respectively of rank equal to $P_1$ and $P_2$ with relevant coefficients $\bm{b}_1$ and $\bm{b}_2$
+\citep{eilers:96,wood:06}. To complete specification of the DL curves, a penalty term is imposed on the DL
+coefficients. The overall penalty $J(\bb{\lambda}{})$ is
+\begin{equation}\label{eq:penalty}
+J(\bb{\lambda}{})=\lambda_1 \bb{b}{1}^\top\bb{D}{1}^\top\bb{D}{1}^{}\bb{b}{1}^{}+\lambda_2
+\bb{b}{2}^\top\bb{D}{2}^\top\bb{D}{2}^{}\bb{b}{2}^{}+\omega_1
+\bb{b}{1}^\top\bb{C}{}^\top\bb{\Upsilon}{1}^{}\bb{C}{}\bb{b}{1}^{}+\omega_2
+\bb{b}{2}^\top\bb{H}{}^\top\bb{\Upsilon}{2}^{}\bb{H}{}\bb{b}{2}^{}.
+\end{equation}
+where $\bm{D}_1$ and $\bm{D}_2$ are difference matrices \citep{eilers:96}, $\bm{\Upsilon}_1$ and
+$\bm{\Upsilon}_2$ are two diagonal known weight matrices \citep{muggeo:08}. Therefore the DL coefficients are doubly penalised: a
+standard difference penalty ($\bb{b}{1}^\top\bb{D}{1}^\top\bb{D}{1}^{}\bb{b}{1}^{}$ and
+$\bb{b}{2}^\top\bb{D}{2}^\top\bb{D}{2}^{}\bb{b}{2}^{}$) on the spline coefficients to ensure smoothness over the whole
+lag range in the spirit of classical P-splines \citep{eilers:96}, and an additional varying ridge penalty
+affecting late DL coefficients to favour the DL curves approaching to zero at longer lags. Therefore the
+penalised log-likelihood may be written as $\ell(\bm{\delta},\bm{b}_1,\bm{b}_2)-J(\bb{\lambda}{})$ where
+$\ell(\cdot)$ is the Poisson log-likelihood.
+
+The smoothing parameter $\boldsymbol{\lambda}=(\lambda_1,\lambda_2,\omega_1,\omega_2)^\top$ affects the estimate of
+all the model parameter, especially $\bm{\beta}_1$ and $\bm{\beta}_2$, by regulating the smoothness of the DL
+curves via the spline coefficients $\bm{b}_1$ and $\bm{b}_2$. To obtain values of the smoothing parameter
+$\boldsymbol{\lambda}=(\lambda_1,\lambda_2,\omega_1,\omega_2)^\top$, a reasonable approach is to minimise an
+empirical version of the expected mean square error: for known scale parameter (and specifically equal to one in
+the Poisson case) we consider the so-called un-biased risk estimator (or scaled AIC) given by \citep{wood:06}
+$$
+\mathrm{UBRE}=\frac{1}{n}\{\mathit{Dev}+2\mathit{edf}-n\}
+$$
+in which $\mathit{Dev}=2\sum y_i\log(y_i/ \hat{\mu}_i)$ is the usual model deviance, and $\mathit{edf}$ are the effective degrees
+of freedom computed as trace of the hat matrix. Additional measures are available, including the well-known AIC
+(Akaike information criterion) and BIC (Bayesian information criterion). Selection of $\bm{\lambda}$ may be
+carried out efficiently by the method proposed in \citet{wood:04} and implemented in his \pkg{mgcv} package by
+the function \code{gam.fit()}.
+
+The estimation procedure which allows to bypass the problems related to the non-regularity of the segmented
+models (\ref{eq:2break.mod}) or (\ref{eq:1break.mod}) extends the previous work of \citet{muggeo:03} implemented
+in the \proglang{R} package \pkg{segmented} \citep{segmented}, and it is described elsewhere \citep{muggeo:08}.
+Details are omitted, but it is important to emphasise that estimation is performed iteratively in terms of the
+spline coefficients (rather than the DL coefficients) maximising a log-likelihood penalised for the
+(\ref{eq:penalty}), and supplying starting values only for the thresholds.
+
+Poor clear-cut segmented relationships, due to short time series and/or a lot of zeroes in the observed
+counts and/or and many outliers, can make model estimation difficult; problematic convergence may suggest that
+the model being fitted is not supported by data (see model \code{o2} in the section 3). However limited
+experience on some datasets, shows that these computational troubles are quite unlike in typical time series and
+the model is successfully fitted most of times. At the convergence estimates of the thresholds and their
+standard errors are readily available from the model output, while the DL curves are easily obtained using the
+B-spline bases. For instance, for the cold DL curve we get
+$$
+\boldsymbol{\hat{\beta}}_1=\boldsymbol{C\hat{b}}_1\qquad\widehat{\COV}(\boldsymbol{\hat{\beta}}_1)=\boldsymbol{C}\widehat{\COV}(\boldsymbol{\hat{b}}_1)\boldsymbol{C}^\top,%\qquad
+$$
+and in the same way it is possible to obtain the estimates for the heat curve.
+
+\section{Overview of the package}
+
+The \proglang{R} package \pkg{modTempEff} includes functions to fit the constrained segmented distributed lag
+model to epidemiological time series of temperature and mortality. The package is written in \proglang{R} code
+\citep{R}, and it is available from the Comprehensive \proglang{R} Archive Network at
+\url{http://CRAN.R-project.org/package=modTempEff}. The package depends on the packages \pkg{mgcv} and \pkg{splines}, and it
+includes the following functions.
+
+
+\begin{itemize}
+
+\item \code{tempeff(formula, data, fcontrol, etastart, drop.L, ...)}.
+This is the main function aimed at estimating the model.
+
+\item \code{csdl(z, psi, L, ridge, ndx, DL, diff.varying)}. This function is employed within the formula of
+    \code{tempeff()} to set the temperature variable and the arguments necessary to fit a CSDL parameterization.
+
+\item \code{seas(x, ndx)}. This function allows to include in the linear predictor a nonparametric term for the long term trend
+    and seasonality.
+
+\item \code{fit.control(tol, display, it.max, GLM, maxit.inner)}. Auxiliary function relevant to the fitting
+process.
+
+\item \code{print(x, digits, ...)}, \code{summary(object, spar, digits, ...)}, and \code{coef(object, which, L, ...)}.
+Methods to visualize and to extract the most relevant information of the fit.
+
+\item \code{anova(object, ..., dispersion, test)}. Method to perform model comparisons.
+
+\item \code{plot(x, which, var.bayes, add, delta.rr, level, ...)}.
+Method to plot the estimated DL curves for cold and heat.
+\end{itemize}
+
+\code{tempeff()} is used to specify the model: \code{formula} is the standard formula of the regression equation
+including confounders (e.g., days of week, influenza epidemics, ...) entering the model linearly, the
+temperature variable having a constrained segmented distributed lag relationship which has to be specified via
+the function \code{csdl()}, and the nonparametric term for long term trend and seasonality. \code{data} means
+the possible dataset where the variables are stored, and the control argument \code{fcontrol} refers to the
+some options of the fitting process returned \code{fit.control()}. Starting values may be supplied in
+\code{etastart}, and \code{drop.L} is an integer to specify whether the first `\code{drop.L}' observations have
+to be discarded before fitting. \code{drop.L} may be useful when several fitted models have to be compared and
+the same number of observations in each model is desirable, as explained below. The three dots \code{...} accept
+arguments to be passed to \code{csdl()} as discussed below.
+
+Actually \code{tempeff()} is based on \code{tempeff.fit()} which is not designed to be called from the user; in
+turn, \code{tempeff.fit()} uses \code{gam.fit()} from the \pkg{mgcv} package and \code{splineDesign()} from the
+\pkg{splines} package, both included in the \proglang{R} base distribution. \code{tempeff()} returns objects of
+class `\code{modTempEff}' for which some methods exist as described below.
+
+The function \code{csdl()} is employed to include in the model a variable having a \textit{csdl} relationship
+with the response; this variable, specified via its first argument \code{z}, typically represents the mean or
+maximum daily temperature or sometimes the `apparent' temperature accounting for humidity and pressure. The
+arguments \code{psi} and \code{L} are mandatory; one or two starting values have to supplied in \code{psi}
+depending on the number of the breakpoints to be estimated, while \code{L} defines the maximum lags within which
+to assess the effect of cold and heat, see $L_1$ and $L_2$ in formulas (\ref{eq:2break.mod}) and
+(\ref{eq:1break.mod}); Of course, the first $max(L_1,L_2)$ observations are removed when a CSDL is included.
+The optional arguments \code{ndx}, \code{DL} and \code{diff.varying} regulate smoothing of DL curves. \code{ndx}
+requires two integers (default to \code{round(L/3)}) to specify the `apparent' dimension of the B-spline bases
+for cold and heat ($P_1$ and $P_2$ of formula (\ref{eq:beta2b})). The user may impose a global difference
+penalty on the spline coefficients (\code{DL = FALSE}, default) or on the DL coefficients themselves
+(\code{DL = TRUE}): empirical evidence has shown that the two options are unlike to lead different results. The
+argument \code{diff.varying} (default to \code{FALSE}) enables the user to specify a varying difference penalty,
+in the form $\sum_l(\beta_l-\beta_{l-1})^2\delta_l$ with $\delta_l$ being a monotonic function of lag $l$ which
+penalises against large values of differences of DL coefficients. Some simulations have shown this varying
+difference penalty is substantially unnecessary and even not advised in practice, provided that a varying ridge
+penalty is used. The additional varying ridge penalties are specified via the argument \code{ridge} which
+defaults to \code{NULL} indicating no ridge penalty. Otherwise \code{ridge} is a length-two named list of
+characters written as a function of \code{l}; for instance two quadratic ridge penalties for both cold and heat
+may be set via \verb|ridge = list(cold = "l^2", heat = "l^2")|.
+
+The function \code{seas()} allows to model the long term trend and seasonality in a non parametric way: a
+(usually rich) B-spline of rank \code{ndx} is used with a standard second-order difference penalty to prevent
+undersmoothing.
+
+\code{fit.control()} allows to control the estimating algorithm, for instance via \code{tol} to regulate the
+tolerance value at which the algorithm stops, \code{display} to print the iterative process, and \code{it.max}
+to set the maximum number of the (outer) iterations of the algorithm. Each outer iteration comprises a few inner
+iterations managed by \code{maxit.inner} and \code{GLM} which defaults to \code{FALSE}. When \code{GLM = TRUE}, at
+each iteration an unpenalised GLM is fitted via \code{glm.fit()}, otherwise \code{gam.fit()} from \pkg{mgcv} is
+used. \code{GLM = TRUE} speeds up computations since the smoothing parameter is estimated only at the final
+iteration, and therefore it may be helpful with very large datasets when \code{gam.fit()} is unpractical;
+however some experience suggests to use \code{GLM = FALSE} to prevent premature convergence to non-optimal
+solutions.
+
+Finally the methods \code{print}, \code{summary}, \code{coef}, \code{anova} and \code{plot} allows to visualize,
+extract and display the most important information of the fit; in particular \code{coef} returns `\code{L}+1'
+coefficients of DL curves for cold and/or heat (depending on \code{which}), and \code{plot} portrays the fitted
+DL curves for cold and/or heat effects (depending on \code{which}) with pointwise confidence intervals at level
+\code{level}.
+
+
+\section[Fitting the model in R]{Fitting the model in \proglang{R}}
+
+We illustrate the aforementioned functions on a simulated dataset, including daily time series of natural
+mortality and temperature for five years ($T=1825$). We load the package via
+
+<<loadlib>>=
+library("modTempEff")
+@
+
+Notice that \code{modTempEff} loads the packages \pkg{splines} and \pkg{mgcv}; the former is employed to build
+the B-spline bases of formula (\ref{eq:beta2b}) via the function \code{splineDesign()}, and the latter is
+requested to perform `selection' of the smoothing parameter $\bm{\lambda}$ and model estimation via the function
+\code{gam.fit()}.
+
+The typical dataset employed in the analysis of temperature (or air pollution) effect on health, comprises daily
+times series of the `health variable' (mortality counts, all causes or cause-specific) and
+meteorological/environmental variables. The dataset also includes variables corresponding to day, year, month,
+and day-of-week. The data being analysed have a similar appearance
+
+<<data>>=
+data("dataDeathTemp")
+head(dataDeathTemp)
+@
+
+The variables \code{mtemp} and \code{dec1} are basic for our analysis, as they represent the daily time series
+of mean temperature and death counts; \code{dec1} is actually simulated using estimates coming from a real data
+analysis. \code{month}, \code{year}, \code{day}, and \code{wday} are `seasonal' variables respectively for month
+(12 level categorical variable), year (5 level categorical variable), day (integer $t=1,2,\ldots,1825$) and day
+of week (7 level categorical variable). Although additional variables, such as humidity or pressure, may be
+present in the dataset in practice, we neglect them for simplicity; the rationale of discussed methods and
+relevant code are unchanged.
+
+Figure~\ref{fig:descrittive} shows the daily time series of mortality counts and a raw scatterplot of mortality
+against temperature. Note the classical seasonal pattern in the daily series and the V-shaped relationship
+mortality-temperature. These figures may be obtained easily via
+
+<<eval=false>>=
+layout(matrix(c(1,1,2), ncol = 3))
+with(dataDeathTemp, plot(dec1, xlab="day", ylab="no. of deaths"))
+with(dataDeathTemp, plot(mtemp, dec1, xlab="temperature", ylab="no. of deaths"))
+@
+
+\setkeys{Gin}{width=\textwidth,height=.3\textwidth}
+\begin{figure}[!ht]
+\begin{center}
+<<descrPlots,fig=TRUE,echo=FALSE>>=
+layout(matrix(c(1,1,2), ncol = 3))
+with(dataDeathTemp, plot(dec1, xlab="day", ylab="no. of deaths"))
+with(dataDeathTemp, plot(mtemp, dec1, xlab="temperature", ylab="no. of deaths"))
+@
+\caption{\label{fig:descrittive} Daily time series of death counts (left) and mortality-temperature scatterplot
+(right).}
+\end{center}
+\end{figure}
+
+The interest centers on the temperature effects controlling for confounders, such as seasonality and days-of
+week, to be included in the regression equation. A starting model could consider the categorical variables year,
+month and day of week to control for seasonality, while the temperature effects could be modeled via equation
+(\ref{eq:1break.mod}) with maximum lags $L_1=L_2=60$; we assume two B-spline bases of rank given by
+\code{round(L)/3} (default) and no ridge penalty, i.e., the default \code{ridge = NULL}; the starting value for the
+threshold is set to 20 as suggested by the right plot in Figure~\ref{fig:descrittive}. The option \code{display = TRUE}
+in \code{fit.control()} allows to monitor the
+estimation process by printing at each iteration the deviance and the current estimate of the threshold.
+
+
+<<>>=
+o <- tempeff(dec1 ~ day + factor(dweek) + factor(year) + factor(month) + 
+csdl(mtemp, psi = 20, L = c(60, 60)), data = dataDeathTemp, fcontrol = fit.control(display = TRUE))
+@
+
+Convergence is attained in twelve iterations and the fitted model is stored in the object \code{o}.
+
+Following a recently consolidated approach in the analysis of mortality time series, we may improve the fit by
+including a smoother for seasonality rather than parametric terms for month, year and day; at this aim, we use
+penalised splines by modifying properly the formula,
+<<>>=
+o.noRidge <- update(o, .~. - day - factor(year) - factor(month) + seas(day, 30), fcontrol = fit.control(display = FALSE))
+@
+The smoother used to model the long term trend and seasonality of the observed series is a `classical' P-spline,
+that is B-splines with a difference penalty on the coefficients. It should be emphasized that \code{ndx}, like
+\code{ndx} argument in \code{csdl()}, controls the rank, i.e., the size of the basis used for the penalized
+spline; the rank or `apparent' dimension is `\code{ndx}+3' since third degree splines are employed, but the
+`actual' dimension, i.e., the effective degrees of freedom ($\mathit{edf}$), are obtained as trace of the hat matrix,
+and they are typically much less than the corresponding basis size. Note that in the analysis of epidemiological
+time series, P-splines fitted by direct maximisation of the penalised log-likelihood should be preferred to the
+alternative nonparametric smoothers fitted by backfitting. The pitfall with the backfitting lies on the
+so-called `concurvity' (i.e., a sort of nonparametric collinearity) which leads to biased estimates for the model
+parameters, especially for the cold effect \citep{ramsay:03,muggeo:04}.
+
+A raw inspection of the fitted models via the \code{print} method may be useful to assess the different fits,
+<<>>=
+o
+
+o.noRidge
+@
+
+The print method returns the usual model residual deviance with the AIC, BIC, UBRE and also some information on
+the number of parameters of the model and of any B-spline employed. The rank is the apparent dimension of the
+bases, i.e., the number of basis functions equal to the number of column of the matrix. The effective degrees of
+freedom ($\mathit{edf}$) measure the actual model dimension which is reduced owing to penalty. Overall, model \code{o}
+(with a design matrix having 70 columns) uses $\mathit{edf}=39.35$, and model \code{o.noRidge} (design matrix having 86
+columns) with a nonparametric term for seasonality exploits $\mathit{edf}=48.22$. The DL  curves of cold and heat are
+substantially based on the same $\mathit{edf}$. AIC and UBRE tend to prefer \code{o.noRidge} with respect to \code{o},
+but the BIC is better for model \code{o}; we can try to improve the model (such that each likelihood-based
+criterion is better), by also imposing the fitted DL curves to follow a more plausible biological pattern.
+Following arguments reported in \citet{muggeo:08} and briefly sketched above, we could try to include a ridge
+penalty to allow the DL curves to approach to zero more rapidly. We set a linear varying ridge penalty on the DL
+coefficients i.e., $\bb{\Upsilon}{1}=\bb{\Upsilon}{2}=\mbox{diag}(0,1,2,3,\ldots,60)$ such that the varying ridge
+wiggliness measures become $\sum_{l_1=0}^{60}\beta^2_{1l_1}l_1$ and $\sum_{l_2=0}^{60}\beta^2_{2l_2}l_2$,
+respectively for cold and heat. The argument \code{ridge} of \code{csdl()} has to be employed at this aim, and a
+natural call makes use of \code{csdl(mtemp, 20, c(60, 60), ridge = list(cold = "l", heat = "l"))} in the formula of \code{tempeff()}.
+
+However the \code{...} in \code{tempeff()} accept arguments to be passed to \code{csdl()}; therefore we can simply type
+<<>>=
+o.Ridge.l <- update(o.noRidge, ridge = list(cold = "l", heat = "l"))
+@
+and note the formula reads correctly as
+<<>>=
+formula(o.Ridge.l)
+@
+Each argument given in \code{tempeff()} via the \code{...} is passed to \code{csdl()} by overwriting its
+possible previous value; this feature may be useful for the user interested in fitting and comparing different
+models, for instance by replacing the temperature variable (`apparent' rather than `ambient' temperature, say) and/or
+by modifying the starting values for the breakpoint and/or the number of lags \code{L}.
+
+The effect of the varying ridge penalty is to shrink the late DL coefficients throughout zero. However the
+amount of shrinkage depends on the weights (main diagonals of $\bb{\Upsilon}{1}$ and $\bb{\Upsilon}{2}$) and on
+the smoothing parameters $\omega_1$ and $\omega_2$. While smoothing parameters are not modifiable as they
+are estimated by data, it is possible to increase weights to strengthen the effect of shrinkage. Quadratic or cubic
+weights lead to results similar to ones returned by a linear ridge (model \code{o.Ridge.l}) and relevant results
+are not shown. On the other hand a varying ridge penalty with quartic weights, such as $\sum_{l_1=0}^{60}\beta^2_{1l_1}l_1^4$ and
+$\sum_{l_2=0}^{60}\beta^2_{2l_2}l_2^4$, leads to noteworthy outcome,
+
+<<>>=
+o.Ridge.l4 <- update(o.noRidge, ridge = list(cold = "l^4", heat = "l^4"))
+o.Ridge.l4
+@
+
+Now each likelihood-based criterion (including the BIC) is better than the previous ones; we can use the anova
+method to compare the different fits using the Mallows' Cp statistic which is closely related to AIC,
+
+<<>>=
+anova(o.noRidge, o.Ridge.l, o.Ridge.l4, test = "Cp")
+@
+
+As expected, the deviance is lower for more complex models (higher $\mathit{edf}$), however both AIC and BIC are lower
+for the model \code{o.Ridge.l4} which uses less than 12.36 degrees of freedom as compared with the model with no
+ridge penalty. In conclusion, P-splines for seasonality and a quartic ridge penalty for the DL curves should be
+preferred. Of course, different combinations of varying ridge penalty patterns might be used for cold and heat,
+and comparisons could be made via statistical criteria and/or substantive assessments. We do not include these
+comparisons or a discussion in the present paper.
+
+We can have a deeper glance of the `selected' model via \code{summary()},
+
+<<>>=
+summary(o.Ridge.l4)
+@
+
+Most of the printed information are rather self-explaining, although some points are noteworthy. The V variable
+shows the estimate and relevant t-value of a re-parameterization of the threshold; at the convergence such
+values should be small. We suggest to warn about fits with large values of coefficients of the V variable.
+
+The reported net effect of temperature is the sum of the lag specific log relative risks for cold and heat. Such
+synthesis measure is aimed at quantifying the overall effect of cold and heat effects after accounting for
+possible `harvesting'. The harvesting occurs when a positive association at short lags (positive lag-specific DL
+coefficients, typically within seven days) is followed by negative association at longer lags (negative
+lag-specific DL coefficients) which should suggest a `deficit' of mortality. From an epidemiological point of
+view, this would emphasise that the effect of temperature is `only' to anticipate the deaths by some days,
+probably affecting more vulnerable people, elderly or suffering persons \citep[e.g.,][]{hajat:05}. For the
+estimates of the net effect and of the threshold, two standard errors are computed. The `frequentist' ones
+(\code{SE.freq}) are based on a sandwich formula involving penalised and unpenalised information matrix assuming
+fixed the smoothing parameter; the `bayesian' standard errors (\code{SE.bayes}) also account, to some extend,
+for the smoothing parameters and therefore should be preferred as featured by better coverage properties, see
+\citet{wood:06} for details. Threshold estimate is also reported along with corresponding standard errors
+(bayesian and frequentist). Note the breakpoint is actually estimated, and therefore it is included in the
+overall $df$ of the CSDL parameterization given by $df$(cold) plus $df$(heat) plus 1 breakpoint (for
+model \code{o.Ridge.l4} it is $1.064+5.269+1=7.33$).
+
+Lag-specific log relative risk may be extracted via the `coef' method,
+
+<<>>=
+coef(o.Ridge.l4,L=7)
+@
+where \code{L} specifies the number of coefficients to be returned.
+
+It is instructive to compare the fitted DL curves from the three aforementioned models.
+
+\setkeys{Gin}{width=\textwidth,height=.5\textwidth}
+\begin{figure}[!ht]
+\begin{center}
+<<DLcurve,fig=TRUE,echo=FALSE>>=
+par(mfcol = c(2, 3))
+plot(o.noRidge, new = FALSE)
+plot(o.Ridge.l, new = FALSE)
+plot(o.Ridge.l4, new = FALSE)
+@
+\caption{\label{fig:confrontoDL} Smoothed Distributed Lag curves for cold (top) and heat (bottom) from three
+different models. From left to right: only global penalty (\code{o.noRidge}), global plus linear ridge penalty
+(\code{o.Ridge.l}), and global plus quartic ridge penalty (\code{o.Ridge.l4}).  }
+\end{center}
+\end{figure}
+
+
+Figure~\ref{fig:confrontoDL} emphasises the nice end of the additional varying penalty. Plots on the left side
+show the fitted DL curves using only a global difference penalty. This output is substantially the one of the
+approach by \citet{zanobetti:00}, although they deal with a linear (non-segmented) relationship using different
+basis and penalty. Note, however, the DL estimated curve (and its standard errors) does not approach to zero at
+late lags. This implies, for instance, that the estimate of the `net' effect (sum of lag-specific effects) and
+corresponding standard error might depend on choice of maximum lag $L$.
+
+While a simple difference penalty ensures smoothness over the lags, the varying ridge penalty allows the DL
+curve estimate to approach to zero. Unlike the only difference penalty, the additional varying ridge shrink the
+DL coefficients and their standard errors towards zero. DL coefficients near to zero at longer lags are
+biologically plausible since they assume a vanishing effect as lag increases. Moreover this feature makes choice
+of maximum lag a minor issue.
+
+The plots of DL curves are obtained via the \code{plot} method
+<<eval=false>>=
+par(mfcol = c(2, 3))
+plot(o.noRidge, new = FALSE)
+plot(o.Ridge.l, new = FALSE)
+plot(o.Ridge.l4, new = FALSE)
+@
+
+Notice the argument \code{new = FALSE} has been set to display the plot on the current device; otherwise the
+default value \code{new = TRUE} would have opened a new device. Additional arguments for the plot method can be
+used to specify which DL has to be drawn (cold, heat or both of them), the level of the pointwise confidence
+intervals and which standard errors should be used (frequentist or bayesian). Note when the `\code{modTempEff}'
+object has been called without a CSDL term,  \code{plot.modTempEff()} still works by drawing the fitted
+nonparametric term for seasonality, provided that it has been included in the model. This method also works for
+fits obtained with fixed (i.e., not estimated) breakpoints via \code{fcontrol = fit.control(it.max = 0)}.
+
+We conclude the illustration of the code by fitting model (\ref{eq:2break.mod}), namely two different thresholds
+for cold and heat. The only difference concerns the \code{psi} argument which now requires two starting values.
+Thus,
+
+<<>>=
+o2<-tempeff(dec1 ~ day + factor(dweek) + factor(year) + factor(month) + csdl(mtemp, psi = c(10, 20), L = c(60, 60)), data = dataDeathTemp,
+     fcontrol = fit.control(display = TRUE))
+@
+
+The algorithm does not converge after 20 iterations; in general, we could also increase the number of iterations
+or modify the starting values, but usually this does not change the result, see \citet{muggeo:08r} for a
+discussion about non convergence in segmented regression.
+
+Broadly speaking, we can interpret such non-convergence as over-fitting, namely the fitted model is not
+supported by data and a `bath-type' relationship (see equation (\ref{eq:2break.mod})) is unlike. However it is
+always possible to inspect the fit to have a deeper assessment of the results,
+
+<<>>=
+summary(o2)
+@
+There are several indications to discard this two-breakpoints model. First, point estimates of the threshold are
+very close each other, with corresponding confidence intervals strongly overlapped. Second, and more
+importantly, the AIC, BIC and UBRE are somewhat higher. Similar convergence problems occur when we try to
+estimate two breakpoints in the previously `selected' model (\code{o.Ridge.l4}) with a nonparametric term for
+seasonality and an additional varying ridge penalty to smooth the DL curves.
+
+<<>>=
+o2.Ridge.l4 <- update(o.Ridge.l4, psi = c(10, 20), fcontrol = fit.control(it.max = 30))
+
+o2.Ridge.l4
+@
+
+Due to the additional breakpoint to be estimated, note the model rank is 87, one more than the one of
+\code{o.Ridge.l4}; however AIC, BIC and UBRE do not improve.
+
+We do not discuss further the selection between one- or two-breakpoints models, and following results reported
+in \citet{tiwari:05}, we suggest of using the BIC; at this aim the anova method includes the option \code{test="BIC"},
+<<>>=
+anova(o.Ridge.l4, o2.Ridge.l4, test="BIC")
+@
+
+Note the BIC returned by \code{anova.modTempEff} is actually computed as $Dev+\log(n)\times \mathit{edf}$ which is
+numerically different from the ones by the print and summary methods, $-2\ell +\log(n)\times \mathit{edf}$; however
+findings from model comparisons are unchanged.
+
+The dataset shipped with the package also includes two additional simulated response counts: \code{decNS} which
+is not associated with \code{mtemp}, and \code{dec2} which is associated via a CSDL parameterization with
+two breakpoints. The user may try to fit models with these responses and to assess different results.
+
+\section{Conclusion}
+
+We have discussed the practical implementation of a log-linear regression model to analyse the temperature
+effects on mortality with (daily) time series data. The model is estimated via penalised log-likelihood by means
+of the efficient \code{gam.fit()} function in the \pkg{mgcv} package. Estimates of distributed lag effect of the
+cold and heat, and threshold values are returned, along with additional linear parameters and a smoothing term
+to account for long term trend and seasonality.
+
+There are several sides where the model and the package may be improved, specifically with regard to the effect
+of air pollution, e.g., particulate matter or ozone. Currently the pollutant may enter the model linearly in the
+\code{formula} of \code{tempeff()}, however it would be interesting to model it via an additional distributed
+lag effect with its proper maximum lag, size of the spline basis, and smoothing parameter to be estimated from
+data. Modelling pollutant via a separate DL does not pose particular problems and its implementation appears
+rather practicable: this feature could be included in the next release of the package. A much more challenging
+improvement would be to model the synergic effect of temperature and pollutant via two bivariate DL curves,
+cold-by-pollutant and heat-by-pollutant. The idea has been discussed in \citet{muggeo:07} assuming a fixed
+breakpoint $\psi$, but further investigation is needed to modify the model framework and the estimating
+procedure when the breakpoints have to be estimated. Another possible and non-straightforward extension of the
+package concerns the so-called case-crossover studies where each event day is matched to several control days
+according to a specified design \citep[e.g.,][]{janes05}. The constrained segmented distributed lag parameterization may
+be still applied in theory, but the regression model to fit is not longer a log-linear model for count response
+but a conditional logit model with a binary response applied to an opportunely augmented dataset. Therefore
+fitting the constrained segmented distributed lag parameterization would rely on a different function, perhaps
+the \code{clogit()} from package \pkg{survival} \citep{survival}. More generally, the present package may be employed to model
+data from different fields; if model (\ref{eq:2break.mod}) or (\ref{eq:1break.mod}) hold and the response
+variable belongs to exponential family, \pkg{modTempEff} may be customized by modifying the \code{family}
+argument of the call to \code{gam.fit()}.
+
+However in its current implementation, at time of writing the model has been successfully employed in the
+analysis of temperature and mortality in Santiago and Palermo, two cities with different climatic conditions
+\citep{muggeo-hajat:09}, and it is hoped that the package may be helpful for researchers involved in
+epidemiological studies of mortality and temperature.
+
+
+\section*{Acknowledgments}
+
+I would like to thank the anonymous referees and the Editor Achim Zeileis for their constructive comments on the manuscript and the package
+itself. This work was partially supported by grant `Fondi di Ateneo (ex 60\%) 2007' prot. ORPA07J7R8.
+
+
+\bibliography{biblioVignette}
+
+\end{document}

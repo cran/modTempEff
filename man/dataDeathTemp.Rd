@@ -1,12 +1,12 @@
-\name{dataset}
-\alias{dataset}
+\name{dataDeathTemp}
+\alias{dataDeathTemp}
 \docType{data}
 \title{Simulated dataset}
 \description{
   Simulated dataset of daily time series of mortality, temperature, pollutant, 
   and seasonal variables.
 }
-\usage{data(dataset)}
+\usage{data(dataDeathTemp)}
 \format{
   A data frame with 1825 observations on the following 8 variables.
   \describe{
@@ -33,6 +33,6 @@
 %  ~~ possibly secondary sources and usages ~~
 %}
 \examples{
-\dontrun{data(dataset)}
+\dontrun{data(dataDeathTemp)}
 }
 \keyword{datasets}

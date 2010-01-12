@@ -14,8 +14,8 @@
 \tabular{ll}{
 Package: \tab modTempEff\cr
 Type: \tab Package\cr
-Version: \tab 1.4\cr
-Date: \tab 2009-11-23\cr
+Version: \tab 1.5\cr
+Date: \tab 2010-01-12\cr
 License: \tab GPL\cr
 }
 Package \code{modTempEff} fits a Poisson log linear regression to model the temperature effect on health 
@@ -29,9 +29,9 @@ Vito M.R. Muggeo \email{vito.muggeo@unipa.it}
 %##Maintainer: Vito M.R. Muggeo <vito.muggeo@unipa.it>
 }
 \references{
-Muggeo, V.M.R. (2009) Analyzing temperature effects on mortality within the R 
+Muggeo, V.M.R. (2010) Analyzing temperature effects on mortality within the R 
   environment: the constrained segmented distributed lag parameterization
-    \emph{Journal of Statistical Software}, submitted.
+    \emph{Journal of Statistical Software} \bold{32}, 12, 1--17.
 
 Muggeo, V.M.R. (2008) Modeling temperature effects on mortality: multiple 
     segmented relationships with common break points
@@ -62,14 +62,14 @@ review of the epidemiologic evidence  \emph{Epidemiological Reviews} \bold{24}, 
 }
 \examples{
 \dontrun{
-data(dataset)
+data(dataDeathTemp)
 o1<-tempeff(dec1~day+factor(dweek)+factor(year)+factor(month)+
       csdl(mtemp,L=c(60,60),psi=20, ridge=list(cold="l^2",heat="l^2")),
-      data=dataset, fcontrol = fit.control(display=TRUE))
+      data=dataDeathTemp, fcontrol = fit.control(display=TRUE))
 
 o2<-tempeff(dec1~seas(day,30)+
       csdl(mtemp,L=c(60,60),psi=20, ridge=list(cold="l^2",heat="l^2")),
-      data=dataset, fcontrol = fit.control(display=FALSE))
+      data=dataDeathTemp, fcontrol = fit.control(display=FALSE))
 
 }
 }

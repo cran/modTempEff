@@ -52,12 +52,12 @@ be useful when the same model has to be re-fitted (via \code{update}) by modifyi
 of \code{csdl()}. See \code{\link{tempeff}}.
 }
 \references{ 
-Eilers, P., Marx, B. (1996). Flexible Smoothing with B-splines and Penalties 
+Eilers, P., Marx, B. D. (1996). Flexible Smoothing with B-splines and Penalties 
 \emph{Statistical Science} \bold{11}, 89--121.
 
-Wood, S.N. (2006) \emph{Generalized Additive Models: An Introduction with R.} Chapman and Hall/CRC Press.
+Wood, S. N. (2006) \emph{Generalized Additive Models: An Introduction with R.} Chapman and Hall/CRC Press.
                                      
-Muggeo, V.M.R. (2008) Modeling temperature effects on mortality: multiple 
+Muggeo, V. M. R. (2008) Modeling temperature effects on mortality: multiple 
 segmented relationships with common break points
 \emph{Biostatistics} \bold{9}, 613--620.
  }

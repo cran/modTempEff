@@ -1,7 +1,7 @@
 \name{tempeff}
 \alias{tempeff}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ Modelling Temperature Effects on Mortality }
+\title{ Modelling temperature effects on mortality }
 \description{
   Fits the constrained segmented distributed lag log-linear regression model to daily 
   time series data of mortality and temperature and additional confounding factors.
@@ -63,9 +63,9 @@ Muggeo, V.M.R. (2008) Modeling temperature effects on mortality: multiple
     segmented relationships with common break points
     \emph{Biostatistics} \bold{9}, 613--620.
 
-Muggeo, V.M.R. (2009) Analyzing temperature effects on mortality within the R 
-  environment: the constrained segmented distributed lag parameterization
-    \emph{Journal of Statistical Software}, submitted.
+Muggeo, V.M.R. (2009) Analyzing Temperature Effects on Mortality Within the R 
+  Environment: The Constrained Segmented Distributed Lag Parameterization
+    \emph{Journal of Statistical Software}, \bold{32} 12, 1--17.
     }
 
 \author{Vito Muggeo, \email{vito.muggeo@unipa.it}}
@@ -89,10 +89,10 @@ Muggeo, V.M.R. (2009) Analyzing temperature effects on mortality within the R
 \examples{
 \dontrun{
 library(modTempEff)
-data(dataset)
+data(dataDeathTemp)
 o1<-tempeff(dec1~day+factor(dweek)+factor(year)+factor(month)+
       csdl(mtemp,L=c(60,60),psi=20),
-      data=dataset, fcontrol = fit.control(display=TRUE))
+      data=dataDeathTemp, fcontrol = fit.control(display=TRUE))
 
 #add a ridge penalty: note how you *can* specify ridge!
 #you do NOT need to use csdl(..,ridge=..) 

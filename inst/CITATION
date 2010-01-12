@@ -1,0 +1,30 @@
+citHeader("To cite modTempEff in publications use:")
+
+citEntry(entry = "Article",
+  title        = "Analyzing Temperature Effects on Mortality Within the {R} Environment: The Constrained Segmented Distributed Lag Parameterization.",
+  author       = personList(as.person("Vito M. R. Muggeo")),
+  journal      = "Journal of Statistical Software",
+  year          = "2010",
+  volume        = "32",
+  number        = "12",
+  pages         = "1--17",
+  url           = "http://www.jstatsoft.org/v32/i12/",
+  
+  textVersion  =
+  paste("Vito M. R. Muggeo (2010).",
+        "Analyzing Temperature Effects on Mortality Within the R Environment: The Constrained Segmented Distributed Lag Parameterization.",
+        "Journal of Statistical Software, 32, 12: 1-17.")
+)
+
+citEntry(entry = "Article",
+  title        = "Modelling temperature effects on mortality: multiple segmented relationships with common break points.",
+  author       = personList(as.person("Vito M. R. Muggeo")),
+  journal      = "Biostatistics",
+  year         = "2008",
+  volume       = "9",
+  pages        = "613--620",
+  textVersion  =
+  paste("Vito M. R. Muggeo (2008).",
+        "Modelling temperature effects on mortality: multiple segmented relationships with common break points.",
+        "Biostatistics, 9: 613-620.")
+)
