@@ -14,8 +14,8 @@
 \tabular{ll}{
 Package: \tab modTempEff\cr
 Type: \tab Package\cr
-Version: \tab 1.5\cr
-Date: \tab 2010-01-12\cr
+Version: \tab 1.5.1\cr
+Date: \tab 2012-04-12\cr
 License: \tab GPL\cr
 }
 Package \code{modTempEff} fits a Poisson log linear regression to model the temperature effect on health 

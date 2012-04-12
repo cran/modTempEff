@@ -3,11 +3,11 @@ import(mgcv)
 
 export(tempeff, tempeff.fit, fit.control, seas, csdl,
       summary.modTempEff, print.modTempEff, plot.modTempEff,
-      anova.modTempEff, coef.modTempEff) 
+      anova.modTempEff, coef.modTempEff, logLik.modTempEff) 
 
 S3method(plot,modTempEff)
 S3method(print,modTempEff)
 S3method(summary,modTempEff)
 S3method(anova,modTempEff)
 S3method(coef,modTempEff)
-
+S3method(logLik,modTempEff)

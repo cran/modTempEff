@@ -605,6 +605,6 @@ I would like to thank the anonymous referees and the Editor Achim Zeileis for th
 itself. This work was partially supported by grant `Fondi di Ateneo (ex 60\%) 2007' prot. ORPA07J7R8.
 
 
-\bibliography{biblioVignette}
+\bibliography{modTempEff}
 
 \end{document}

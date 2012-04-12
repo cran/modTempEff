@@ -16,7 +16,8 @@ seas(x, ndx = stop("please, provide `ndx' in seas()"))
   \item{x}{the long term trend variable
   }
   \item{ndx}{the apparent dimension (i.e. the rank) of the B-spline employed to 
-  model the long trend.
+  model the long trend. For instance it could be \code{min(40,n/4)} where \code{n} is the 
+  time series length.
   }
 }
 \details{

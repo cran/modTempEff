@@ -9,7 +9,7 @@ The function extracts the estimated coefficients of the DL curves for cold and/o
 heat effect.
 }
 \usage{
-coef.modTempEff(object, which = c("cold", "heat"), L, ...)
+\method{coef}{modTempEff}(object, which = c("cold", "heat"), L, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
