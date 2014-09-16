@@ -1,5 +1,5 @@
 `tempeff` <-
-function(formula, data, fcontrol=fit.control(), etastart=NULL, drop.L, ...){
+function(formula, data, subset, na.action, fcontrol=fit.control(), etastart=NULL, drop.L, ...){
 # source("d:/lavori/jss/modtempeff/r/tempeff.r")
 #--required functions: bspline() lagged()
 bspline<-function(x, ndx, xlr=NULL, deg=3, deriv=0){
@@ -32,7 +32,7 @@ lagged<-function(x,lag=1){#by T.Lumley
 #-----------------------------------
     if (missing(data)) data <- environment(formula)
     mf <- match.call(expand.dots = FALSE)
-    m<-match(c("formula", "data"), names(mf), 0)
+    m<-match(c("formula", "data", "subset", "na.action"), names(mf), 0)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame") #restituisce model.frame(formula = y ~ x, data = d, drop.unused.levels = TRUE)
@@ -58,7 +58,7 @@ lagged<-function(x,lag=1){#by T.Lumley
     if(!is.null(id.csdl)){ #se c'è csdl() nella formula..
         if("z"%in%names(match.call(expand.dots = FALSE)$...)){
             new.mf <- match.call(expand.dots = TRUE)
-            new.m<-match(c("formula", "data","z"), names(new.mf), 0)
+            new.m<-match(c("formula", "data","z","subset", "na.action"), names(new.mf), 0)
             etic<-nomeTemp<-as.character(new.mf[["z"]])
                 } else {
             etic<-nomeTemp<-all.vars(formula)[id.csdl]
@@ -112,7 +112,7 @@ lagged<-function(x,lag=1){#by T.Lumley
         #
         if("z"%in%names(match.call(expand.dots = FALSE)$...)){
             new.mf <- match.call(expand.dots = TRUE)
-            new.m<-match(c("formula", "data","z"), names(new.mf), 0)
+            new.m<-match(c("formula", "data","z","subset", "na.action"), names(new.mf), 0)
             new.mf<-new.mf[c(1,new.m)]
             new.mf[[1]]<-as.name("model.frame")
             new.mf <- eval(new.mf, parent.frame())

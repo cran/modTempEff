@@ -1,0 +1,20 @@
+*************************************
+*				  		*
+*	Changes in modTempEff	  	*
+*				  		*
+*************************************
+
+
+===============
+version 1.5.2
+===============
+* plot.modTempEff() gains arguments 'updown', 'col.shade', 'leg' 
+* tempeff() gains arguments 'na.action' and 'subset'
+* vignette location issue fixed
+
+
+
+===============
+version 1.5.1
+===============
+* logLik.modTempEff added

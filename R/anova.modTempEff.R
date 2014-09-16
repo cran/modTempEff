@@ -1,6 +1,6 @@
 `anova.modTempEff`<-function(object, ..., dispersion = NULL, test = NULL){
 #----
-    anova.glmlist1<-function (object, ..., dispersion = NULL, test = NULL){
+anova.glmlist1<-function (object, ..., dispersion = NULL, test = NULL){
       responses <- as.character(lapply(object, function(x) {
         deparse(formula(x)[[2L]])
     }))
@@ -14,6 +14,8 @@
     if (any(ns != ns[1L]))
         stop("models were not all fitted to the same size of dataset")
     nmodels <- length(object)
+    anova.glm<-NA
+    rm(anova.glm)
     if (nmodels == 1)
         return(anova.glm(object[[1L]], dispersion = dispersion,
             test = test))

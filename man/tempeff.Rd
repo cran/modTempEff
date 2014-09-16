@@ -7,7 +7,7 @@
   time series data of mortality and temperature and additional confounding factors.
   }
 \usage{
-tempeff(formula, data, fcontrol = fit.control(), etastart = NULL, 
+tempeff(formula, data, subset, na.action, fcontrol = fit.control(), etastart = NULL, 
   drop.L, ...)
   }
 %- maybe also 'usage' for other objects documented here.
@@ -15,8 +15,10 @@ tempeff(formula, data, fcontrol = fit.control(), etastart = NULL,
   \item{formula}{ the model formula such as `response ~ parametric terms + csdl(temperature) + seas(day)', 
   see details.}
   \item{data}{ the dataset where the variables are stored. }
+  \item{subset}{an optional vector specifying a subset of observations to be used.}% 
+  \item{na.action}{a function to indicate how to handle NA observations.} %
   \item{fcontrol}{ a list with components returned by \code{fit.control()}. }
-  \item{etastart}{ possible starting values on the scale of the linear predictor. }
+  \item{etastart}{possible starting values on the scale of the linear predictor. }
   \item{drop.L}{ integer, specifying whether the first `\code{drop.L}' observations should be removed
     before fitting. This is useful for model comparison purposes, see notes.}
   \item{\dots}{ additional arguments to be passed to \code{csdl()} in the formula, see details. }

@@ -7,7 +7,8 @@
 }
 \usage{
 \method{plot}{modTempEff}(x, which = c("cold", "heat"), add=FALSE, new=TRUE, 
-  var.bayes = FALSE, delta.rr = TRUE, level = 0.95, ...)
+      var.bayes = FALSE, delta.rr = TRUE, level = 0.95, 
+      updown=TRUE, col.shade=NULL, leg=NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,7 +23,13 @@
   \item{delta.rr}{ logical indicating if the DL curves should be plotted on the log scale or as
     per cent change in relative risk, i.e. 100*(exp(.)-1).}
   \item{level}{ the selected confidence level of the pointwise confidence intervals to be plotted}
-  \item{\dots}{ additional arguments.. }
+  \item{updown}{ logical; if \code{TRUE} the plotting area is split according to \code{par(mfrow=c(2,1))} when
+  both the cold and heat DL curves are drawn.}
+  \item{col.shade}{the color of the shaded area representing the pointwise confidence intervals. If \code{NULL}
+  no color is used. }
+  \item{leg}{the possible legends to be set on the \code{"topright"} side of each plot. When both the cold and
+  heat DL curves are drawn it should be a 2-length vector with the first component refering to the plot of cold.}
+  \item{\dots}{ additional arguments, such as \code{xlab}, \code{ylab}, and \code{lwd}. }
 }
 \details{
      Takes a fitted \code{"modTempEff"} object produced by \code{tempeff()} and plots the 
